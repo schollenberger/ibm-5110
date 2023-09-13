@@ -60,7 +60,7 @@ class CodeTable:
     sio6bit_table[0x2a] = "V"
     sio6bit_table[0x1a] = "W"
     sio6bit_table[0x3a] = "X"
-    sio6bit_table[0x06]  = "Y"
+    sio6bit_table[0x06] = "Y"
     sio6bit_table[0x26] = "Z"
 
     sio6bit_table[0x34] = "."

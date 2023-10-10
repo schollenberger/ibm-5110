@@ -58,12 +58,14 @@ if __name__ == "__main__":
     # now print decoded string along with original hex input
     # We need to re-implement the shift state logic to suppress shift codes
     # in hex input and show which characters have been shifted
-    
+
     print()
-    print(" *   UTF-8 converted   -   Input Hex Strings  *nn -> shifted characters")
-    print(" *   ---------------   -   --------------------------------------------")
+    ##print(" *   UTF-8 converted   -   Input Hex Strings  *nn -> shifted characters")
+    print(" *   UTF-8 converted   -   Input reversed Hex characters   *nn -> shifted characters")
+    print(" *   ---------------   -   ---------------------------------------------------------")
 
     esc_chr = chr(3)  # Escape new line chars with UTF-8(0x13)
+    esc_chr = '\u00a4'   # Escape new line chars with UTF-8(0x13)
     o_width = 16      # Number of chars per line in output
 
     sh_offset = 0     # initial shift offset
@@ -85,7 +87,8 @@ if __name__ == "__main__":
                 elif int(hxstr,16) == sio6bit.bit_reverse([sio6bit.shift_off])[0]:
                     o_sep = "  "
                     hex_idx += 1
-                hxstr = hex_content[hex_idx]
+                ##hxstr = hex_content[hex_idx]
+                hxstr = f'{out_content[hex_idx]:x}'.zfill(2)
                 print(o_sep + hxstr, end="")
                 hex_idx += 1
             print()

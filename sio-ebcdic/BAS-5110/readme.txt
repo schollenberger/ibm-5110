@@ -1,0 +1,1 @@
+These programms are to be transferred to the 5110 via sioxfer.

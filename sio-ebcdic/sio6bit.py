@@ -34,7 +34,7 @@ def bit_reverse(in_array):             # type bytearray
         if (ichr & 0xC0) == 0:
             out = (ichr & 0x20 > 0) + (ichr & 0x10 > 0)*2 + (ichr & 0x08 > 0)*4 + (ichr & 0x04 > 0)*8 + (ichr & 0x02 > 0)*16 + (ichr & 0x01 > 0)*32
         else:
-            print("*Error* in converting no ",i," hex: ",hex(ichr), "dec: ",ichr)
+            print("*Error* in converting char - hex: ",hex(ichr), "dec: ",ichr)
         ## print(i," Result: ",out, " hex:", hex(out))
         out_array.extend([out])
     return out_array
@@ -120,8 +120,8 @@ decoding_table = (
     '\x03'      # 0x0D -> Zero over Backslash
     '\x03'      # 0x0E -> Delta over Bar
     '\x03'      # 0x0F -> T over Bullet
-    '@'         # 0x10 - > AT Symbol / Arrow Left
-    '/'         # 0x11
+    '@'         # 0x10 -> AT Symbol / Arrow Left
+    '/'         # 0x11 -> Slash
     'S'         # 0x12
     'T'         # 0x13
     'U'         # 0x14
@@ -131,7 +131,7 @@ decoding_table = (
     'Y'         # 0x18
     'Z'         # 0x19
     '&'         # 0x1A
-    "'"         # 0x1B
+    ","         # 0x1B
     '\x03'      # 0x1C
     '\x03'      # 0x1D
     '\x03'      # 0x1E -> UC (Upper Shift)
@@ -163,7 +163,7 @@ decoding_table = (
     'H'         # 0x38
     'I'         # 0x39
     '{'         # 0x3A
-    ','         # 0x3B
+    '.'         # 0x3B
     '\x00'      # 0x3C
     '\x00'      # 0x3D
     '\x00'      # 0x3E -> LC (Lower Shift)
@@ -211,7 +211,7 @@ decoding_table = (
     '?'         # 0x68 -> Question Mark
     '\x00'      # 0x69 ->
     '\x00'      # 0x6A ->
-    ')'         # 0x6B ->
+    '('         # 0x6B ->
     '\x00'      # 0x6C ->
     '\x00'      # 0x6D ->
     '\x00'      # 0x6E ->

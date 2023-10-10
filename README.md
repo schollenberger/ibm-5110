@@ -31,15 +31,22 @@ uses a different translation table.
 This project deals with converting characters that go over a IBM-5110 serial
 line, so that they an be read and processed on an ASCII based PC.
 
-### sio_6bit_code.py
+### sio6bit.py
 
-First attempt to cover 6-bit code translation in a class. (## Needs to be
-rewised to follow the encoding / decoding patterns in python, like the module
-'ebcdic' ##)
+Similar to Python Codec classes it converts between the 6-bit EBCDIC code and
+UTF-8. This is a stateful Codec as the 6-bit has defined SHIFT characters
+that switch to and from a second code page.
+In addition to the standard 'ebcdic' codec it covers the APL characters as far
+as they are transmitted over an IBM 5110 serial port that is configured to 6 bit.
 
-### read_sio_6bit_hex.py
+We found that the IBM 5110 transmits the least significant bit first over the
+serial port, which is different to other serial ports. Therefore the function
+'bit_reverse' has been added to convert them to the normal byte order on a PC.
 
-Decodes hex bytes in a string using the sio_6bit_code module. Input can be
+
+### read_sio_6bit_hex-reverse.py
+
+Decodes hex bytes in a string using the module 'sio6bit'. Input can be
 the Hex output of a terminal program that records what the IBM 5110 sends.
 
 

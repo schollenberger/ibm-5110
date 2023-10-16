@@ -4,6 +4,7 @@
 # assume reverse bit order
 #
 import sys
+import argparse
 import sio6bit
 
 
@@ -11,18 +12,30 @@ import sio6bit
 
 if __name__ == "__main__":
 
-    fn = "./data_examples/hex-2-sio6bit-short.txt"
-    argfn = ""
+    def_fn = "./data_examples/hex-2-sio6bit-short.txt"
 
-    # print("Argument List:",str(sys.argv))
+    parser = argparse.ArgumentParser(prog="read_6bit_hex-reverse",
+        description='read file with Hex codes from serial output via SIO 6 bit from IBM 5100 assume reverse bit order')
 
+    parser.add_argument('fn', nargs='?', help="filename, default = "+def_fn)
+    parser.add_argument('--dr', action="store_true", help="display reversed hex bytes instead of original ones")
+
+    args = parser.parse_args()
+    #print("Args:", args)
+
+    fn = def_fn
+    if args.fn: fn = args.fn
+
+    """
     if len(sys.argv) > 1:
        fn = sys.argv[1]
        print("File from command line:",fn)
     else:
        print("No filename in command line using default:",fn)
+    """
+    print("Filename = ",fn)
 
-    # print("Filename = ",fn)
+    print("Option display_reversed = ", args.dr)
 
     with open(fn, "r") as f:
         content = f.read()

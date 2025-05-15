@@ -1,0 +1,42 @@
+SIOXFER on 5110 Versions
+
+26.08.2023 Werner Schollenberger
+
+In order to compare different versions of basic programs 
+first stip off the line numbers. This allows you to identify
+identical commands after a basic renumber operation.
+
+You can use the script "slinenum.sh [<fn>]". E.g.
+	cat <file1> | ./slinenum.sh > xx1
+        cat <file2> | ./slinenum.sh > xx2
+        diff xx1 xx2 > <v1>_<v2>.cm
+
+
+1st commit of sioxfer.bas:  sioxfer-5011-V2006-12-05.bas  - Version SIOXFER EC.2006/12/05 H.RUFFNER
+ - first known vesion so far.
+ - HEX transformation starting from 0x00 - 0xff
+
+2nd commit of sioxfer.bas:  sioxfer-5011-V2007-10-12.bas  - Version SIOXFER EC.2007/10/12 H.RUFFNER
+ - HEX transformation array changed to decending (0xff-0x00) for performance reasons
+
+3rd commit of sioxfer.bas:  sioxfer-5011-V2007-10-22.bas  - Version SIOXFER EC.2007/10/22 H.RUFFNE
+ - ??
+
+Further versions - not committed yet:
+
+sioxfer-5011-V2023-07-18.bas  - Vesion SIOXFER EC.2023/07/18 H.RUFFNER
+- version 2 with changes in protocol (File type spec)
+- not compatible to version 1
+- new ALC(5100) Char table, 
+- looks like in-between version - not finished
+
+
+sioxfer-5011-V2023-07-23.bas  - Vesion SIOXFER EC.2023/07/23 H.RUFFNER
+ - version 2
+ - New File type "500" 
+ - Code Page support in filetype spec
+
+sioxfer-5011-2023-08-01.bas  - Version SIOXFER EC.2023/08/01 H.RUFFNER
+ - version 2
+ - Filetype "500" changed to "PRT"
+ - latest vesion from Horst Ruffner - as of Aug 2023

@@ -1,0 +1,48 @@
+Horst Ruffner
+70567 Stuttgart (M”hringen)
+Salz„ckerstr. 8
+Tel. 0711-7168843
+Email: horst.ruffner@t-online.de
+
+Transfer Daten von und nach 5110 ber die Serielle Schnittstelle.
+
+1.  Modemkabel zwischen PC (9-pol Mutter) und 5110 (25-pol Vater) stecken.
+2.  5110: Band (Diskette) SIO in 5110 einlegen
+3.  5110: Loader laden ('LINK 1, 'E80' ('D80'))
+4.  5110: Load from Tape (Diskette)
+5.  5110: Drive Nr = 1, File Nr = 5
+6.  5110: Return to system
+7.  5110: Wenn LOAD0 kommt, 'LOAD 7' eingeben.
+8.  PC:   SIOXFER starten
+9.  PC:   X (Select a .sio file) 'SIO5110'
+10. PC:   O (Open Com)
+11. 5110: Programm starten ('RUN')
+    5110: Danach erscheint 'GUEST COMPUTER IS WAITING'
+12. PC:   S Start Transfer
+13: PC:   Im MENU 2: S Specify source directory and filename
+          z.B.: 'E80 11 TEMP'
+14: PC:   Im MENU 2: D Specify destination directory and filename
+          z.B.: 'D:\IBM\MUSEUM\SIO\SIO5110.BAS'
+15: PC:   G Get file from Guest Computer to Host Computer
+
+
+Es k”nnen nun Daten von und zur 5110 hin und her kopiert werden. Dazu ist die
+Kontrolle allein beim PC.
+
+Es ist zu beachten, daá die 5110 fr jeden Character eine Konvertierung von
+1 Byte > 2 Bytes (5110 -> PC) oder 2 Bytes > 1 Byte (PC -> 5110) vornehmen
+muá und das naturgem„á mit einem 8 Bit Prozessor mit 2 MHz Taktrate, der im
+Basic Interpreter l„uft, naturgem„á nicht besonders schnell geht.
+Dabei ist auf der 5110 der Cyclesteal Mode fr den Bildschirm die meiste Zeit
+ausgeschaltet, sonst wrde die Konvertierung die doppelte Zeit in Anspruch
+nehmen. Der Bildschirm wird nur zwischendurch kurz eingeschaltet, um den Status
+zu beobachten.
+
+Bemerkungen:
+1.  Wenn von der 5110 ein Basic Programm geholt werden muá, ist dies im
+    Source Code vorher abzuspeichern
+    (z.B. SAVE 11, 'TEMP',SOURCE, RECL=128, SEQ, E80)
+2.  Beim bertragen von Daten vom PC zur 5110 ist '1 sek. Delay after each
+    record' einzustellen, um Datenverlust zu vermeiden.
+
+

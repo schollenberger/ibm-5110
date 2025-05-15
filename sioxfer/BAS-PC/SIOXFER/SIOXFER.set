@@ -1,0 +1,27 @@
+* Setup parameter file generated 08-02-2023 11:21:09 by Sioxfer Version EC:1.0 (1.8.2023)
+Parameter: RD 1 
+Parameter: TR 1 
+Parameter: SP 0 
+Parameter: RS 0 
+Parameter: ME 0 
+Parameter: PE 0 
+Parameter: FE 0 
+Parameter: PO COM1
+Parameter: BR 9600
+Parameter: PA N
+Parameter: BI 8
+Parameter: RL 256
+Parameter: ST 2
+Parameter: IM 0
+Parameter: CI EBCDIC
+Parameter: CO EBCDIC
+Parameter: MR 99999
+Parameter: DM 0
+Parameter: OP ,CS60000
+Transfer : TY ?  _C=?  _L=? 
+Transfer : SO ?
+Transfer : DE ?
+Transfer : ME ?
+Transfer : CT SIOXFER
+Transfer : DT ?
+End

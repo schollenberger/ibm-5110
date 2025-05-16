@@ -20,11 +20,18 @@
 *        debug ignore modes                                                    *
 *                                                                              *
 *******************************************************************************/
-#include "windows.h"
+//#include "windows.h"
 #include "rserial.h"
 
 #include "globals.h"
 #include "usbsio.hpp"
+
+/******************************** Global Variables ****************************/
+  int       eof            = 0                      ; /* end of file flag     */
+  int       CharIndex      = 1                      ; /* Character Position   */
+  IString   Buf$                                    ; /* temp Buffer          */
+  Rserial   *com                                    ; /* Rserial              */
+
 
 /* -----------------------------------------------------------------------------
 | The following routines are special for the USBSIO card using VCOM port       |
@@ -40,8 +47,8 @@
     serial_parity parity_arg;
     com=new Rserial();
     com->disconnect();
-//  if (SIO_DFlg == 0)
-//    {
+    if (SIO_DFlg == 0)
+    {
       Port=P11$;
       Baud=atoi(P12$);
       Parity=P13$;
@@ -53,9 +60,10 @@
       if (P6==1) {SIO_Options=",PE";}
       if (P7==1) {SIO_Options=",FE";}
       SIO_Options=SIO_Options+P22$;
+      cout << "INIT(): SIO_Options: <" << SIO_Options << ">" << endl;
 
       com->connect(Port, Baud, Parity, Bits, StopBits, SIO_Options);
-//    }
+    }
     return; /* end INIT */
     }
 /* -------------------------------*/

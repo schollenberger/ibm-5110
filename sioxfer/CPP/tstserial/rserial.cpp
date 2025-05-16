@@ -24,7 +24,7 @@
 #include <conio.h>
 #include <windows.h>
 
-#include "Rserial.h"
+#include "rserial.h"
 
   Rserial::Rserial()
     {

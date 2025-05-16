@@ -11,11 +11,181 @@
 *******************************************************************************/
 #include <conio.h>
 #include <stdio.h>
+#include <iostream.h>
+
 #include "globals.h"
+#include "usbsio.hpp"
 #include "tstserial.h"
 
 
-#include "usbsio.hpp"
+/******************************** Global Variables ****************************/
+/******************************** Global Variables ****************************/
+  IString   Prog           = "TstSerial"            ; /* programname          */
+  IString   Vers           = "1.0"                  ; /* version              */
+  IString   ProgOwner      = "WSB + HR"             ; /* program owner        */
+  IString   Date                                    ; /* Date + Time          */
+  IString   Dat                                     ; /* Date (Basic Format)  */
+  IString   Tim                                     ; /* Time (Basic Format)  */
+
+
+  IString   Space          = " "                    ; /* Space                */
+  IString   Spaces20       = "....|....|....|....|" ; /* 20 Spaces            */
+  IString   Spaces40       = "                                        " ;
+  time_t    StartTime      = time(NULL)             ; /* Start Time           */
+  time_t    StopTime       = time(NULL)             ; /* Stop  Time           */
+  int       RunTime                                 ; /* RunTime              */
+  int       TotRunTime                              ; /* Total RunTime        */
+ 
+  int       P1             = 0                      ; /*                      */
+  int       P2             = 0                      ; /*                      */
+  int       P3             = 0                      ; /*                      */
+  int       P4             = 0                      ; /*                      */
+  int       P5             = 0                      ; /*                      */
+  int       P6             = 0                      ; /*                      */
+  int       P7             = 0                      ; /*                      */
+
+  IString   P11$           = "COM2"                 ; /*                      */
+  IString   P12$           = "9600"                 ; /*                      */
+  IString   P13$           = "N"                    ; /*                      */
+  IString   P14$           = "8"                    ; /*                      */
+  IString   P15$           = 256                    ; /*                      */
+  IString   P16$           = "2"                    ; /*                      */
+  IString   P17$           = "0"                    ; /*                      */
+  IString   P18$           = "EBCDIC"               ; /*                      */
+  IString   P19$           = "EBCDIC"               ; /*                      */
+  IString   P20$           = 99999                  ; /*                      */
+  IString   P21$           = "0"                    ; /*                      */
+  IString   P22$           = ""                     ; /*                      */
+  IString   P17b$          =""                      ; /*                      */
+  IString   T18$           = P18$                   ; /*                      */
+  IString   T19$           = P19$                   ; /*                      */
+  IString   C11$           = "COM1 COM2 COM3 COM4 COM5 COM6 COM7 COM8";
+  IString   C12$           = "75 110 150 300 600 1200 1800 2400 4800 9600 19200 38400 57600 115200 ";
+  IString   C13$           = "N E O S M";
+  IString   C14$           = "5 6 7 8 H P";
+  IString   C16$           = "1 2";
+  IString   C17$           = "0 1 2 3 4 5 6 7 8";
+
+  IString   Sep            = "\x5C"                 ; /* "\" used for DOS     */
+  IString   CurDir         = "."                    ; /* current directory    */
+  IString   WorkDir        = "."                    ; /* workdirectory        */
+  IString   ToolsDir       = "D:"+Sep+"TOOLS"+Sep+"bin"; /* toolsdirectory    */
+  IString   OutMsg         = ""                     ; /* message              */
+
+  int       SIO_CFlg       = 0                      ; /* Code Pages in Msg Fil*/
+  int       SIO_DFlg       = 0                      ; /* SIO debug flag       */
+  int       SIO_TFlg       = 0                      ; /* SIO trace flag       */
+  int       SIO_SFlg       = 0                      ; /* SIO status flag      */
+
+  IString   x04            = "\x04"                 ; /*                      */
+  IString   x0A            = "\x0A"                 ; /*                      */
+  IString   x0D            = "\x0D"                 ; /*                      */
+  IString   x0A0D          = x0A+x0D                ; /*                      */
+  IString   x10            = "\x10"                 ; /*                      */
+  IString   x15            = "\x15"                 ; /*                      */
+//IString   x16            = "\x16"                 ; /*                      */
+  IString   x1A            = "\x1A"                 ; /*                      */
+  IString   x1E            = "\x1E"                 ; /*                      */
+  IString   x1F            = "\x1F"                 ; /*                      */
+  IString   x151E          = x15+x1E                ; /*                      */
+  IString   x151E1F        = x15+x1E+x1F            ; /*                      */
+  IString   x04151E        = x04+x15+x1E            ; /*                      */
+  IString   x041E1F        = x04+x1E+x1F            ; /*                      */
+  IString   x04151E1F      = x04+x15+x1E+x1F        ; /*                      */
+//IString   x17            = "\x17"                 ; /* ETB End of Trans.Blk.*/
+  IString   xDF            = "\xDF"                 ; /* ascii 223            */
+
+  IString   SioOptions$    = ""                     ; /* SioOptions$          */
+  IString   RS$            = ""                     ; /* SioOptions$          */
+  IString   ME$            = ""                     ; /* SioOptions$          */
+  IString   PE$            = ""                     ; /* SioOptions$          */
+  IString   FE$            = ""                     ; /* SioOptions$          */
+  IString   Bits$          = "8"                    ; /* P14$ = 8,H,P         */
+
+
+
+  IString   Msg_File       = Prog+".msg"            ; /* messagefile          */
+  ofstream  MsgFile(Msg_File)                       ; /* messagefile          */
+
+
+
+  IString   Filetype$      = "TXT"                  ; /* Filetype             */
+  IString   Srcfile$       = ""                     ; /* Source File          */
+  IString   Dstfile$       = ""                     ; /* Destination File     */
+  IString   Message$       = ""                     ; /* Message              */
+  IString   Ctlfile$       = ""                     ; /* Control File         */
+  IString   Ctl_File                                ; /* Control File         */
+  IString   DmpTline$      = ""                     ; /* Dump Tline           */
+  int       rc             = 0                      ; /* returncode           */
+
+  IString   TraFile        = Prog                   ; /* tracefile            */
+  IString   Tra_File       = TraFile+".TRA"         ; /* tracefile            */
+  ofstream  TracFile(Tra_File);
+  IString   Out_File                                ; /* temp outputfile      */
+  IString   Options0       = ""                     ; /* Options0             */
+  IString   Options        = ""                     ; /* Options              */
+  IString   CP437$         = ""                     ; /* ASCII  code translat.*/
+  IString   EBCDIC$        = ""                     ; /* EBCDIC code translat.*/
+  IString   CP5110$        = ""                     ; /* CP5110 code translat.*/
+  IString   CI5110$        = ""                     ; /* CI5110 code translat.*/
+  IString   CP5100$        = ""                     ; /* CP5100 code translat.*/
+  IString   CI5100$        = ""                     ; /* CI5100 code translat.*/
+  IString   ASCFILE1$      = ""                     ; /* ASCFILE1 for debug   */
+  IString   ASCFILE2$      = ""                     ; /* ASCFILE2 for debug   */
+  IString   ASCFILE3$      = ""                     ; /* ASCFILE3 for debug   */
+  IString   CTLFILE1$      = ""                     ; /* CTLFILE1 for debug   */
+  IString   CP5110FILE1$   = ""                     ; /* CP5110FILE1 for debug   */
+  IString   CP5110FILE2$   = ""                     ; /* CP5110FILE2 for debug   */
+  IString   CP5110FILE3$   = ""                     ; /* CP5110FILE3 for debug   */
+
+
+  IString   ASCIIChars     = ""                     ; /* ASCII Characters     */
+
+  IString   Variable       = ""                     ; /* Variablename         */
+  IString   Value          = ""                     ; /* Value of variable    */
+  IString   Group          = ""                     ; /* Setfile parm. group  */
+  IString   CC             = "~"                    ; /* contenuation char    */
+  IString   Inpline        = ""                     ; /* stripped inputline   */
+  IString   Inpline_uc     = ""                     ; /* inputline uppercase  */
+  IString   Inpline_uc_g   = ""                     ; /* inputline uc modified*/
+  int       ContFlg        = 0                      ; /* continue flag        */
+  int       StopFlg        = 0                      ; /* stop flag            */
+
+
+  int       DFlg           = 0                      ; /* Debug flag           */
+
+  int       PS_Flg         = 0                      ; /* txt2ps flag          */
+  int       found          = 0                      ; /* found temp flag      */
+  int       Tra            = 1                      ; /* translate flag       */
+  int       Hex            = 0                      ; /* hex flag             */
+  int       Pdf            = 0                      ; /* pdf flag             */
+
+  int       Ig04           = 0                      ; /* Ignore EOT     ASCII */
+  int       Ig08Ig09       = 0                      ; /* Ignore BS+HT   ASCII */
+  int       Ig0A           = 0                      ; /* Ignore LF      ASCII */
+  int       Ig0A0D         = 0                      ; /* Ignore LF/CR   ASCII */
+  int       Ig37           = 0                      ; /* Ignore EOT     EBCDIC*/
+  int       Ig16Ig05       = 0                      ; /* Ignore BS+HT   EBCDIC*/
+  int       Ig15           = 0                      ; /* Ignore NL      EBCDIC*/
+  int       Ig151E         = 0                      ; /* Ignore NL/RS   EBCDIC*/
+  int       IlineC         = 0                      ; /* Controlfile inputline*/
+  int       RECS           = 0                      ; /* Records              */
+  int       Recs           = 0                      ; /* Records              */
+  int       RecCnt         = 0                      ; /* Records (P20$)       */
+
+  char      Inputline[4096]                         ; /* Inputline            */
+  IString   execline       = ""                     ; /* exec table           */
+  IString   pdfline        = ""                     ; /* txt2ps info          */
+
+
+/******************************** Global Functions ****************************/
+//  void      transfer          (int drv, int rcv, IString sta, int len, IString&, IString&, IString&);
+//  int       Warning           (IString Info, IString Input);
+//  int       MsgEnter          (IString Info);
+  int       SetInfo           (IString Info);
+  int       SetInfo2          (IString Info);
+//  int       SetIbStat         (IString IBInfo ,IString IBStat);
+
 
 /******************************** Functional Code *****************************/
 /*******************************************************************************
@@ -28,6 +198,9 @@ int main(int argc, char **argv)
   GetCurDir(Prog,CurDir);
   WorkDir = CurDir;
 
+  cout << Prog << " Work dir: " << WorkDir << endl;
+ 
+
 /*
   if (argc == 0)
     {
@@ -38,30 +211,58 @@ int main(int argc, char **argv)
     SetFile = strupr(argv[1]);
     }
 */
+ 
+  cout << "The work begins..." << endl;
 
+  INIT();
 
-/*******************************************************************************
-* main  - Application entry point for Sioxfer program                          *
-*                                                                              *
-* Creates a new object mainWindow of class M1SioWindow                         *
-* Sets the size of mainWindow                                                  *
-* Sets the window focus to mainWindow                                          *
-* Displays the mainWindow                                                      *
-* Starts the events processing for the application                             *
-*******************************************************************************/
-    ICoordinateSystem::setApplicationOrientation(ICoordinateSystem::originUpperLeft );
-    srand(time(NULL));
-    M1SioWindow mainWindow (WND_MAIN);
-    mainWindow.sizeTo(ISize(820,575));
-    mainWindow.setFocus();
-    mainWindow.show();
-    mainWindow.setBackgroundColor(IColor::paleGray);
-    IApplication::current().run();
+  IString isMsg = "Hallo du da";
 
-/******************************** Programend **********************************/
-  return 0;
+  PUTS(isMsg);
+  cout << "Waiting for input on serial..." << endl;
+
+  GETS(10);
+
   com->disconnect();
+
+  cout << "...done." << endl;
+
+  return 0;
   } /* end main() */
+
+/*** get date and time for msgfile ********************************************/
+void GetDate(IString& Date)
+  {
+  IString temp1 = IDate().monthOfYear();
+  IString temp2 = IDate().dayOfMonth();
+  IString temp3 = IDate().year();
+  IString temp4 = ITime().asString();
+  Date  = temp1+"/"+temp2+"/"+temp3+" "+temp4;
+  return;
+  }
+
+/*** get current directory ****************************************************/
+void GetCurDir(IString& Prog, IString& CurDir)
+  {
+  int rc = 0;
+  char Inputline0[4096];
+  IString temp;
+  IString TmpFile = Prog + ".tmp";
+  rc = system("dir >> " + TmpFile);
+  ifstream InFile0(TmpFile);
+  while (!InFile0.eof())
+    {
+    InFile0.getline(Inputline0,sizeof (Inputline0),'\n'); temp = Inputline0;
+    if (temp.word(1).upperCase()=="DIRECTORY"||temp.word(1).upperCase()=="VERZEICHNIS")
+      {
+      CurDir = temp.word(3);
+      }
+    }
+  InFile0.close();
+  rc = system("erase " + TmpFile);
+  return;
+  }
+
 
 /*******************************************************************************
 *                                 Programs                                     *
@@ -98,6 +299,11 @@ int main(int argc, char **argv)
 
   void PutFile()
     {
+  IString   temp           = ""                     ; /* temp variable        */
+  IString   temp0          = ""                     ; /* temp variable        */
+  IString   temp1          = ""                     ; /* temp variable        */
+  IString   temp2          = ""                     ; /* temp variable        */
+
     CodeSel();
     StartTime=time(NULL);
     temp0=x10+"BITS="+P14$;
@@ -140,6 +346,11 @@ int main(int argc, char **argv)
 
   void GetFile()
     {
+  IString   temp           = ""                     ; /* temp variable        */
+  IString   temp0          = ""                     ; /* temp variable        */
+  IString   temp1          = ""                     ; /* temp variable        */
+  IString   temp2          = ""                     ; /* temp variable        */
+  
     CodeSel();
     eof=0;
     Recs=0;
@@ -162,7 +373,7 @@ int main(int argc, char **argv)
     temp1="";
     RecCnt=atoi(P20$);
     StartTime=time(NULL);
-    BufC();
+//    BufC();
     temp=GETS(0);
     while ((eof==0)&&(Recs<=RecCnt))
       {
@@ -185,32 +396,19 @@ int main(int argc, char **argv)
     SetInfo("Filetransfer ended - Press enter");
     return;
     }
+/*** SetInfo ******************************************************************/
+int SetInfo(IString Info)
+  {
+  cout << "Setinfo:" << Info << endl;
+  return 0;
+  }
 
-  void StartExec()
-    {
-    execline = Inpline.subString(Inpline.indexOf(":")+1);
-    MsgFile << "-- : starting exec: " << execline << endl;
-    system(execline);
-    MsgFile << "-- : ending exec: " << execline << endl;
-    return;
-    }
-
-  void StartPdfgen()
-    {
-    IString psFile, pdfFile;
-    pdfline = Inpline.subString(Inpline.indexOf(":")+1);
-    MsgFile << "-- : starting txt2ps : " << pdfline << endl;
-    system("txt2ps "+pdfline);
-    MsgFile << "-- : ending txt2ps" << endl;
-    psFile = pdfline.subString(1,strcspn(pdfline,"."))+".ps";
-    pdfFile = pdfline.subString(1,strcspn(pdfline,"."))+".pdf";
-    MsgFile << "-- : starting ps2pdf" << endl;
-    system("ps2pdf "+psFile+" "+pdfFile);
-    system("erase "+psFile);
-    system(pdfFile);
-    MsgFile << "-- : ending ps2pdf" << endl;
-    return;
-    }
+/*** SetInfo2 *****************************************************************/
+int SetInfo2(IString Info)
+  {
+  cout << "Setinfo2:" << Info << endl;
+  return 0;
+  }
 
   void CodeSel()
     {
@@ -223,7 +421,8 @@ int main(int argc, char **argv)
     Ig04=0; Ig08Ig09=0; Ig0A=0; Ig0A0D=0; Ig37=0; Ig16Ig05=0; Ig15=0; Ig151E=0;
     if (P17$!="0")
       {
-      P17b$=HexBin$(8,P17$);
+//      P17b$=HexBin$(8,P17$);
+      P17b$="00000000";
       if (P17b$.subString(8,1)=="1") {Ig04    =1;}
       if (P17b$.subString(7,1)=="1") {Ig08Ig09=1;}
       if (P17b$.subString(6,1)=="1") {Ig0A    =1;}
@@ -250,205 +449,6 @@ int main(int argc, char **argv)
     {
     return;
     }
-
-  void CtlFile()
-    {
-    IString CTL$; int ectl=0; int found=0;
-    Ctl_File = WorkDir+Sep+Ctlfile$+".CTL";
-    ifstream CFile(Ctl_File);
-    if (!CFile)
-      {
-      Rcc = 29; OutMsg = "E-- " + Ctl_File + " not found";
-      error(Rcc,MaxRc,Fails,OutMsg,MsgFile);
-      }
-    else
-      {
-      MsgFile << "-- : parsing " << Ctl_File  << endl;
-      IlineC=0;
-      get_line(CFile,Inpline,Inpline_uc,Inpline_uc_g,CC);
-      while ((!CFile.eof()) && (ectl==0))
-        {
-        IlineC=IlineC+1;
-        if (DFlg == 1) {MsgFile << "-- " << Inpline << endl;}
-        OutMsg = "Error in Ctlfile: "+Inpline;
-        if (Inpline.subString(1,1) != "*")
-          {
-          GetParms(Inpline,Group,Variable,Value);
-          if (Group=="SET")
-            {
-            SetFile=WorkDir+Sep+Variable;
-            SetInfo(" :   Setfile="+SetFile+".SET");
-            RdSetFile();
-            get_line(CFile,Inpline,Inpline_uc,Inpline_uc_g,CC);
-            GetParms(Inpline,Group,Variable,Value);
-            }
-          if (Group=="PAR") {ReadParms(); Id1->WrtEf();}
-          if (Group=="GET") {GetFiles(); found=1; GetFile();}
-          if (Group=="PUT") {GetFiles(); found=1; PutFile();}
-          if (Group=="EXE") {StartExec();found=1;}
-          if (Group=="PDF") {StartPdfgen();found=1;}
-          if (Group=="ASS") {found=1; Disass();}
-          if (Group=="MSG") {found=1; Id2->m2ef5.setText(Message$);}
-          if (Group=="END") {found=1; SetInfo("Filetransferes ended"); ectl=1;}
-          }
-        get_line(CFile,Inpline,Inpline_uc,Inpline_uc_g,CC);
-        }
-      if (found==0)
-        {
-        Rcc = 20; OutMsg = "Illegal Parameter > "+Group+"<";
-        error(Rcc,MaxRc,Fails,OutMsg,MsgFile);
-        }
-      }
-    return;
-    }
-/*** read File Parameters *****************************************************/
-void GetFiles()
-    {
-    Filetype$=Variable;
-    Variable=Value.subString(2);
-    Srcfile$=Variable.subString(1,Variable.indexOf(","));
-    Srcfile$=Srcfile$.translate(","," ");
-    Srcfile$=Srcfile$.strip();
-    Dstfile$=Value.subString(Value.lastIndexOf(",")+1);
-    Id2->m2ef1.setText(Filetype$);
-    Id2->m2ef2.setText(Srcfile$);
-    Id2->m2ef3.setText(Dstfile$);
-    return;
-    }
-
-/*** read setfile *************************************************************/
-void RdSetFile()
-  {
-  int found=0;
-  Set_File = SetFile+".SET";
-  ifstream SFile(Set_File);
-  if (!SFile)
-    {
-    Rcc = 29; OutMsg = "E-- " + Set_File + " not found";
-    error(Rcc,MaxRc,Fails,OutMsg,MsgFile);
-    }
-  else
-    {
-    MsgFile << "-- : parsing " << Set_File << endl;
-    get_line(SFile,Inpline,Inpline_uc,Inpline_uc_g,CC);
-    while (!SFile.eof())
-      {
-      if (DFlg == 1) {MsgFile << "-- " << Inpline << endl;}
-      GetParms(Inpline, Group, Variable, Value);
-      found = 0;
-      if (Inpline.subString(1,1) != "*")
-        {
-        if (Group == "PARAMETER") {found = 1; ReadParms();}
-        if (Group == "TRANSFER" ) {found = 1; ReadFiles();}
-        if (Group == "END"      ) {found = 1; break      ;}
-        }
-      get_line(SFile,Inpline,Inpline_uc,Inpline_uc_g,CC);
-      }
-    if (found == 0) {Rcc=20; OutMsg = "E-- illegal Group: " + Group; error(Rcc,MaxRc,Fails,OutMsg,MsgFile);}
-    }
-  return;
-  }
-
-/*** read parms ***************************************************************/
-  void ReadParms ()
-    {
-    if      (Variable == "RD")
-      {found = 1; P1 =atoi(Value); ChkIntValue(Value, P1, 0, 1);}
-    else if (Variable == "TR")
-      {found = 1; P2 =atoi(Value); ChkIntValue(Value, P2, 0, 1);}
-    else if (Variable == "SP")
-      {found = 1; P3 =atoi(Value); ChkIntValue(Value, P3, 0, 1);}
-    else if (Variable == "RS")
-      {found = 1; P4 =atoi(Value); ChkIntValue(Value, P4, 0, 1);}
-    else if (Variable == "ME")
-      {found = 1; P5 =atoi(Value); ChkIntValue(Value, P5, 0, 1);}
-    else if (Variable == "PE")
-      {found = 1; P6 =atoi(Value); ChkIntValue(Value, P6, 0, 1);}
-    else if (Variable == "FE")
-      {found = 1; P7 =atoi(Value); ChkIntValue(Value, P7, 0, 1);}
-    else if (Variable == "PO")
-      {found = 1; P11$=Value.strip(); ChkStrValue(Value, C11$);}
-    else if (Variable == "BR")
-      {found = 1; P12$=Value.strip(); ChkStrValue(Value, C12$);}
-    else if (Variable == "PA")
-      {found = 1; P13$=Value.strip(); ChkStrValue(Value, C13$);}
-    else if (Variable == "BI")
-      {found = 1; P14$=Value.strip(); ChkStrValue(Value, C14$);}
-    else if (Variable == "RL")
-      {found = 1; P15$=Value.strip(); ChkIntValue(Value, atoi(P15$), 1, 32000);}
-    else if (Variable == "ST")
-      {found = 1; P16$=Value.strip(); ChkStrValue(Value, C16$);}
-    else if (Variable == "IM")
-      {found = 1; P17$=Value.strip(); ChkIntValue(Value, atoi(P17$), 0, 255);}
-    else if (Variable == "CI")
-      {found = 1; P18$=Value.strip(); ChkStrValue(Value, C18$);}
-    else if (Variable == "CO")
-      {found = 1; P19$=Value.strip(); ChkStrValue(Value, C19$);}
-    else if (Variable == "MR")
-      {found = 1; P20$=Value.strip(); ChkIntValue(Value, atoi(P20$), 0, 99999);}
-    else if (Variable == "DM")
-      {found = 1; P21$=Value.strip(); ChkStrValue(Value, C21$);}
-    else if (Variable == "OP")
-      {found = 1; P22$=Value.strip();}
-    if (found==0) {Rcc = 20; OutMsg = "e-- illegal Variable '"+Variable; error(Rcc,MaxRc,Fails,OutMsg,MsgFile);}
-    return;
-    }
-
-/*** read files ***************************************************************/
-  void ReadFiles()
-    {
-    if (Variable == "TY") {Filetype$ = Value.strip();};
-    if (Variable == "SO") {Srcfile$  = Value.strip();};
-    if (Variable == "DE") {Dstfile$  = Value.strip();};
-    if (Variable == "ME") {Message$  = Value.strip();};
-    if (Variable == "CT") {Ctlfile$  = Value.strip();};
-    if (Variable == "DT") {DmpTline$ = Value.strip();};
-    return;
-    }
-
-/*** write setfile ************************************************************/
-  void WrSetFile()
-    {
-    Set_File = SetFile+".SET";
-    ofstream OutFile(Set_File);
-    OutFile << "* Setup parameter file generated " << Date << " by " << Prog << " Version:" << Vers << endl;
-    SaveParms(OutFile);
-    OutFile.close();
-    return;
-    }
-
-/*** SaveParms ****************************************************************/
-  int SaveParms(ofstream& OutFile)
-    {
-    OutFile << "Parameter: RD " << P1  << endl;
-    OutFile << "Parameter: TR " << P2  << endl;
-    OutFile << "Parameter: SP " << P3  << endl;
-    OutFile << "Parameter: RS " << P4  << endl;
-    OutFile << "Parameter: ME " << P5  << endl;
-    OutFile << "Parameter: PE " << P6  << endl;
-    OutFile << "Parameter: FE " << P7  << endl;
-    OutFile << "Parameter: PO " << P11$ << endl;
-    OutFile << "Parameter: BR " << P12$ << endl;
-    OutFile << "Parameter: PA " << P13$ << endl;
-    OutFile << "Parameter: BI " << P14$ << endl;
-    OutFile << "Parameter: RL " << P15$ << endl;
-    OutFile << "Parameter: ST " << P16$ << endl;
-    OutFile << "Parameter: IM " << P17$ << endl;
-    OutFile << "Parameter: CI " << P18$ << endl;
-    OutFile << "Parameter: CO " << P19$ << endl;
-    OutFile << "Parameter: MR " << P20$ << endl;
-    OutFile << "Parameter: DM " << P21$ << endl;
-    OutFile << "Parameter: OP " << P22$ << endl;
-    OutFile << "Transfer : TY " << Filetype$ << endl;
-    OutFile << "Transfer : SO " << Srcfile$  << endl;
-    OutFile << "Transfer : DE " << Dstfile$  << endl;
-    OutFile << "Transfer : ME " << Message$  << endl;
-    OutFile << "Transfer : CT " << Ctlfile$  << endl;
-    OutFile << "Transfer : DT " << DmpTline$ << endl;
-    OutFile << "End"                                 << endl;
-    return 0;
-    }
-
 /*** CodeTranslation **********************************************************/
   IString CodeTrans(IString Incode, IString Outcode, IString Instring)
     {
@@ -470,262 +470,6 @@ void RdSetFile()
     return Outstring;
     }
 
-/*** GetParms *****************************************************************/
-  void GetParms(IString& Inpline, IString& Group, IString& Variable, IString& Value)
-    {
-    temp1 = Inpline;
-    temp1.upperCase();
-    temp1.translate(":","  ");                        /* delete separators    */
-    Group    = temp1.word(1);
-    Variable = temp1.word(2);
-    Value    = temp1.words(3);
-    return;
-    }
 
-  void ChkStrValue(IString& Value, IString& Values)
-    {
-    int i; int found=0;
-    for (i=1; i<=Values.numWords(); i++)
-      {
-      if (Values.word(i)==Value) {found=1;}
-      }
-    if (found==0) {Rcc = 20; OutMsg = "e-- illegal Value '"+Value+"'"; error(Rcc,MaxRc,Fails,OutMsg,MsgFile);}
-    return;
-    }
-  void ChkIntValue(IString& Value, int val, int minval, int maxval)
-    {
-    if (val < minval || val > maxval) {Rcc = 20; OutMsg = "e-- illegal Value '"+Value+"'"; error(Rcc,MaxRc,Fails,OutMsg,MsgFile);}
-    return;
-    }
-
-/*******************************************************************************
-*                                 Functions                                    *
-*******************************************************************************/
-/*** get a new line from input file *******************************************/
-  void get_line(ifstream& Inputfile, IString& Inpline, IString& Inpline_uc, IString& Inpline_uc_g, IString& CC)
-    {
-    char Inputline[4096];
-    IString temp1;
-    IString temp2;
-    IString temp3;
-    Inpline = "";                                     /* reset Inpline        */
-    Inpline_uc = "";                                  /* reset Inpline_uc     */
-    Inpline_uc_g = "";                                /* reset Inpline_uc_g   */
-    Inputfile.getline(Inputline,sizeof(Inputline),'\n');
-    temp1 = Inputline;
-    temp1.strip();                      /* delete leading and trailing blancs */
-     /* add next line, if a continue character (CC) is at the end of the line */
-    while ((CC == temp1.subString(temp1.length(),1)) && (temp1 != ""))
-      {
-      temp2 = temp1.subString(1,temp1.length()-1);
-      Inputfile.getline(Inputline,sizeof(Inputline),'\n');
-      temp3 = Inputline;
-      temp3.strip();
-      temp1 = temp2 + temp3;
-      }
-    temp1.isPrintable();                              /* removes x00-x1F,x7F  */
-    temp1.strip();                      /* delete leading and trailing blancs */
-    Inpline = temp1;
-    temp1.upperCase();                                /* convert to uppercase */
-    Inpline_uc = temp1;
-    temp1.translate("';","  ");                       /* delete separators    */
-    Inpline_uc_g = temp1;
-    Inpline_uc_g.strip();
-    return;
-    }
-
-/*** error handling routine and write infos, warnings and errors to MsgFile ***/
-void error(int& Rcc, int& MaxRc, int& Fails, IString& OutMsg, ofstream& MsgFile)
-    {
-    IString Rcct;
-    int Rc;
-    Rcct = itoa(Rcc,Rcct,10);                         /* Rcct = 2 digits      */
-    Rcct = "0" + Rcct;
-    Rcct = Rcct.subString(Rcct.length()-1);
-    Rcct = Rcct+" "+OutMsg;
-    MsgFile << Rcct << endl;
-    if (Rcc>5) {Fails = Fails+1;}                     /* count only Rcc > 5   */
-    if (Rcc>MaxRc) {MaxRc = Rcc;}                     /* MaxRc = highest Rcc  */
-    if (MaxRc>29)                                     /* Terminate program    */
-      {
-      exit(MaxRc);
-      }
-    return;
-    }
-
-/*** get date and time for msgfile ********************************************/
-void GetDate(IString& Date)
-  {
-  IString temp1 = IDate().monthOfYear();
-  IString temp2 = IDate().dayOfMonth();
-  IString temp3 = IDate().year();
-  IString temp4 = ITime().asString();
-  Date  = temp1+"/"+temp2+"/"+temp3+" "+temp4;
-  return;
-  }
-
-/*** get current directory ****************************************************/
-void GetCurDir(IString& Prog, IString& CurDir)
-  {
-  int rc = 0;
-  char Inputline0[4096];
-  IString temp;
-  IString TmpFile = Prog + ".tmp";
-  rc = system("dir >> " + TmpFile);
-  ifstream InFile0(TmpFile);
-  while (!InFile0.eof())
-    {
-    InFile0.getline(Inputline0,sizeof (Inputline0),'\n'); temp = Inputline0;
-    if (temp.word(1).upperCase()=="DIRECTORY"||temp.word(1).upperCase()=="VERZEICHNIS")
-      {
-      CurDir = temp.word(3);
-      }
-    }
-  InFile0.close();
-  rc = system("erase " + TmpFile);
-  return;
-  }
-
-/*** checking for existing directories and files ******************************/
-int DoesExist(IString& File)
-  {
-  int Rc = 0;
-  FILE *fp;
-  fp = fopen(File, "r");
-  if (fp==0x0)
-    {
-    Rc = 30;
-
-//  SetInfo(File+" does not exist");
-//  msgBox.show(File+" does not exist",IMessageBox::warning);
-    }
-  fclose(fp);
-  return Rc;
-  }
-
-/*** generate PRINT.PDF file and clear PRINT.FIL ******************************/
-//int Pdfgen(IString& Prt_File, IString& Ps_File, IString& Pdf_File)
-//{
-//IString tmp1, tmp2;
-//int Rc = 0;
-//tmp1="txt2ps "+Prt_File;
-//tmp2="ps2pdf "+Ps_File+" "+Pdf_File;
-//rc = system(tmp1);
-//rc = system(tmp2);
-//rc = system("erase " + Prt_File);
-//ofstream  PrtFile(Prt_File);
-//PrtFile << "\x017" << "Q" << endl;
-//return Rc;
-//}
-
-/*** sent PRINT.FIL to HP4L and clear PRINT.FIL *******************************/
-//int printHP4L(IString& Prt_File)
-//{
-//IString tmp1;
-//int Rc = 0;
-//tmp1="print4l "+Prt_File;
-//rc = system(tmp1);
-//rc = system("erase " + Prt_File);
-//ofstream  PrtFile(Prt_File);
-//return Rc;
-//}
-
-/*** program end routine ******************************************************/
-int ProgramEnd()
-  {
-  GetDate(Date);
-  MsgFile << "-- " << Prog << " ended with closing window " << Date << endl;
-  MsgFile.close();
-  return 0;
-  }
-
-int M1SioWindow::ProgramEnd()
-  {
-  GetDate(Date);
-  MsgFile << "-- : " << Prog << " ended rc = " << MaxRc << "  -- total fails = " << Fails << endl;
-  MsgFile << "-- : " << Prog << " ended with ProgramEnd() function " << Date << endl;
-  MsgFile.close();
-  GetDate(Date);
-  HistFile << Prog << "   ended  : " << Date << endl;
-  HistFile << endl;
-  IApplication::current().exit();
-  return 0;
-  }
-
-/*******************************************************************************
-*        Global Functions                                                      *
-*******************************************************************************/
-/*** Warning ******************************************************************/
-int Warning(IString Info, IString Input)
-  {
-  int rc=0;
-//Id1->info2.setBackgroundColor(IColor::white);
-  Id1->info2.setText(Info);
-//if (Id1->info2.text()==Input) {rc=0;}
-  return rc;
-  }
-
-/*** MsgEnter *****************************************************************/
-int MsgEnter(IString Info)
-  {
-  IString buf = "S";
-  Id1->info.setText(Info);
-//Id1->m1ef15.setText("");
-//Id1->m1ef15.setBackgroundColor(IColor::white);
-//Id1->m1ef15.enableDataUpdate();
-//Id1->m1ef15.setFocus();
-//buf=Id1->m1ef15.text();
-//MsgFile << buf << endl;
-//DELAY(5);
-//Id1->m1ef15.setText("1");
-//Id1->m1ef15.setBackgroundColor(IColor::paleGray);
-//Id1->m1ef15.disableDataUpdate();
-    while (buf=="-1")
-////while (0==_kbhit())
-      {
-      buf=_getche();
-      MsgFile << "Key=" << buf << "." << endl;
-      DELAY(5);
-      }
-    buf = "T";
-    MsgFile << "Key=" << buf << "." << endl;
-////MsgFile << "Key=" << _getche() << "." << endl;
-////Id1->info.setText(_getche()); DELAY(5);
-////buf=_kbhit();
-  Id1->info.setText(buf); DELAY(5);
-  return 0;
-  }
-
-/*** SetInfo ******************************************************************/
-int SetInfo(IString Info)
-  {
-  Id1->info.setText(Info);
-//Id1->info.setText(Info); DELAY(5); Id1->info.setText("");
-  return 0;
-  }
-
-/*** SetInfo2 *****************************************************************/
-int SetInfo2(IString Info)
-  {
-  Id1->info2.setText(Info);
-  return 0;
-  }
-
-/*** SetIbStat ****************************************************************/
-  int SetIbStat(IString IbInfo, IString IbStat)
-  {
-  Id1->ibinfo.setText(IbInfo);
-  Id1->ibstat.setText(IbStat);
-  return 0;
-  }
-
-/*** Generate Headerline1 *****************************************************/
-  IString Headerline1()
-  {
-  IString tmp1;
-  GetDate(Date);
-  tmp1="-- : This file was generated by " + Prog + " version " + Vers;
-  return tmp1;
-  }
 
 

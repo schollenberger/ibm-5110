@@ -20,10 +20,6 @@ extern   int       CharIndex;
 extern   Rserial   *com;
 extern   IString   Buf$;
 
-//  IString   IBFunc         = " "                    ; /* IB Function          */
-//  IString   IBInfo         = ""                     ; /* IB Info              */
-//  IString   IBStat         = ".."                   ; /* IB Status            */
-//  IString   IBMenu         = " "                    ; /* IB Menu              */
 //  IString   DatStr                                  ; /* temp data            */
 
 //  IString   OutDat                                  ; /* output data          */

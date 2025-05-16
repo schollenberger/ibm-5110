@@ -1,8 +1,10 @@
 /*******************************************************************************
 * .FILE:         usbsio.cpp                                                    *
 *                                                                              *
-* .DESCRIPTION:  USBSIO Program Version 1:  Class Implementation               *
-*                19.2.2023 modified from USBPIO (remove IEEE Bus functions)    *
+* .DESCRIPTION:  USBSIO Program Version 2:  Class Implementation               *
+*                19.02.2023 modified from USBPIO (remove IEEE Bus functions)   *
+*                10.05.2025 removed Windows stuff to compile as command line   *
+*                           program                                            *   
 *                                                                              *
 * .CLASSES:      UsbSioWindow                                                  *
 *                IbCommandHandler                                              *
@@ -27,10 +29,37 @@
 #include "usbsio.hpp"
 
 /******************************** Global Variables ****************************/
+  IString   IBFunc         = " "                    ; /* IB Function          */
+  IString   IBInfo         = ""                     ; /* IB Info              */
+  IString   IBStat         = ".."                   ; /* IB Status            */
+  IString   IBMenu         = " "                    ; /* IB Menu              */
+
   int       eof            = 0                      ; /* end of file flag     */
-  int       CharIndex      = 1                      ; /* Character Position   */
+//  IString   DatStr                                  ; /* temp data            */
   IString   Buf$                                    ; /* temp Buffer          */
+//  IString   OutDat                                  ; /* output data          */
+//  IString   InpDat                                  ; /* input data           *
+//  IString   Recl           = "4"                    ; /* input Recordlength   */
+//  int       Recl_          = 4                      ; /* Nr. of input bytes   */
+  int       CharIndex      = 1                      ; /* Character Position   */
+//  IString   RN             = "0.00"                 ; /* RepRate <sec>        */
+//  float     RN_            = 0                      ; /* RepRate <sec>        */
+//  IString   FilNam         = " "                    ; /* File Name            */
   Rserial   *com                                    ; /* Rserial              */
+
+
+
+/******************************** Functions ******************************/
+/*  defined in header file 
+*   void     INIT     ();
+*   void     PUTS     (IString&);
+*   IString  GETS     (int);
+*   void     BufC     ();
+*   void     SIOTrac  (IString&);
+*   void     PutCom   (IString, int);
+*   void     GetCom   (IString, int);
+*** void     IbStart  (void *pvParms);                                   *
+**************************************************************************/
 
 
 /* -----------------------------------------------------------------------------
@@ -39,12 +68,15 @@
 
   void INIT()
     {
-    IString MsgFile;
+//    IString MsgFile;  // defined in global.h
+
+    MsgFile << "-- : ** INIT() Start **" << endl;
 
     IString Port, Parity, SIO_Options, Comparm;
     int Baud, Bits, StopBits;
     DCB dcb;
     serial_parity parity_arg;
+    MsgFile << "-- : ** com disconnect **" << endl;
     com=new Rserial();
     com->disconnect();
     if (SIO_DFlg == 0)
@@ -54,16 +86,36 @@
       Parity=P13$;
       Bits=atoi(Bits$);
       StopBits=atoi(P16$);
-      SIO_Options="";
-      if (P4==1) {SIO_Options=",RS";}
-      if (P5==1) {SIO_Options=",ME";}
-      if (P6==1) {SIO_Options=",PE";}
-      if (P7==1) {SIO_Options=",FE";}
-      SIO_Options=SIO_Options+P22$;
+//      SIO_Options="";
+      SIO_Options=SioOptions$;
+//      if (P4==1) {SIO_Options=",RS";}
+//      if (P5==1) {SIO_Options=",ME";}
+//      if (P6==1) {SIO_Options=",PE";}
+//      if (P7==1) {SIO_Options=",FE";}
+//      SIO_Options=SIO_Options+P22$;
+      if (DFlg == 1)
+        {
+        MsgFile << "-- Port            = " << Port            << endl;
+        MsgFile << "-- Baud            = " << Baud            << endl;
+        MsgFile << "-- Parity          = " << Parity          << endl;
+        MsgFile << "-- Bits            = " << Bits            << endl;
+        MsgFile << "-- StopBits        = " << StopBits        << endl;
+        MsgFile << "-- SIO_Options     = " << SIO_Options     << endl;
+        }
+      MsgFile << "-- : ** com connect **" << endl;
+
       cout << "INIT(): SIO_Options: <" << SIO_Options << ">" << endl;
 
       com->connect(Port, Baud, Parity, Bits, StopBits, SIO_Options);
+    } else {
+      MsgFile << "INIT(): simulating COM port - skipping connect()" << endl;
     }
+    IBFunc="INIT"; IBStat="--";                       /* SET CONTROLLER FLAG  */
+    IBInfo="INIT "+Port;
+    MsgFile << "-- : ** INIT() End **" << endl;
+    SIOTrac(IBInfo);
+    if (SIO_SFlg == 1) {SetIbStat(IBInfo, IBStat);}
+
     return; /* end INIT */
     }
 /* -------------------------------*/
@@ -101,8 +153,31 @@
 
     return InputlineG$;
     }
-
-
+/* -------------------------------*/
+  void BufC()
+    {
+    IString IByte$; int i=0;
+    if (SIO_DFlg==0)
+      {
+//    while (com->loc()>0)
+//      {
+//IByte$=INPUT$(1,#7)
+//      i=i+1;
+//      }
+//    IF SIO.Tflg%=1 THEN : PRINT #6.........
+      }
+    return; /* end Clear Buffer */
+    }
+/* -------------------------------*/
+  void SIOTrac(IString& EFlg)
+    {
+    if (EFlg=="") {return;}
+    IBInfo=IBMenu + ": " +EFlg;
+    Rcc=0; OutMsg=IBInfo;
+    error(Rcc,MaxRc,Fails,OutMsg,MsgFile);
+    IBInfo=" ";
+    return; /* end SIOTrac */
+    }
 /* -------------------------------*/
   void PutCom(IString Data, int len)
     {

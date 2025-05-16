@@ -14,8 +14,8 @@
 /******************************** Global Variables ****************************/
 extern   IString   Prog;		 /* programname          */
 
-extern   IString   Space;
-extern   IString   Spaces20;
+//extern   IString   Space;
+//extern   IString   Spaces20;
 extern   time_t    StartTime;
 extern   time_t    StopTime;
 extern   int       RunTime;
@@ -29,27 +29,15 @@ extern   int       P1, P2, P3, P4, P5, P6, P7;
 //extern    int       P6             = 0                      ; /*                      */
 //extern    int       P7             = 0                      ; /*                      */
 
-extern   IString   P11$;
-extern   IString   P12$;
-extern   IString   P13$;
-extern   IString   P14$;
-extern   IString   P15$;
-extern   IString   P16$;
-extern   IString   P17$;
-extern   IString   P18$;
-extern   IString   P19$;
-extern   IString   P20$;
-extern   IString   P21$;
-extern   IString   P22$;
+extern   IString   P11$, P12$, P13$, P14$, P15$, P16$, P17$, P18$, P19$, P20$, P21$, P22$;
 extern   IString   P17b$;
-extern   IString   T18$;
-extern   IString   T19$;
-extern   IString   C11$;
-extern   IString   C12$;
-extern   IString   C13$;
-extern   IString   C14$;
-extern   IString   C16$;
-extern   IString   C17$;
+extern   IString   T18$, T19$;
+extern   IString   C11$, C12$, C13$, C14$, C15$, C16$, C17$;
+
+extern   int       rc;                       /* returncode           */
+extern   int       Rcc;                      /* returncode           */
+extern   int       MaxRc;                    /* Max. returncode      */
+extern   int       Fails;                    /* nr. of fails         */
 
 extern   IString   Sep;
 extern   IString   CurDir;
@@ -57,6 +45,7 @@ extern   IString   WorkDir;
 extern   IString   ToolsDir;
 extern   IString   OutMsg;
 
+extern   int       DFlg;
 extern   int       SIO_CFlg, SIO_DFlg,SIO_TFlg, SIO_SFlg;
 
 extern   IString   x04;
@@ -77,17 +66,27 @@ extern   IString   x0D;
 //IString   x17            = "\x17"                 ; /* ETB End of Trans.Blk.*/
 //  IString   xDF            = "\xDF"                 ; /* ascii 223            */
 
-//  IString   SioOptions$    = ""                     ; /* SioOptions$          */
+extern    IString   SioOptions$;                      /* SioOptions$          */
 //  IString   RS$            = ""                     ; /* SioOptions$          */
 //  IString   ME$            = ""                     ; /* SioOptions$          */
 //  IString   PE$            = ""                     ; /* SioOptions$          */
 //  IString   FE$            = ""                     ; /* SioOptions$          */
-extern    IString   Bits$;
+extern    IString   Bits$;                            /* SIO number of bits */
 
 
 
 extern   IString   Msg_File;
 extern   ofstream  MsgFile;
+
+/******************************** Global Functions ****************************/
+//  void      transfer          (int drv, int rcv, IString sta, int len, IString&, IString&, IString&);
+//  int       Warning           (IString Info, IString Input);
+//  int       MsgEnter          (IString Info);
+
+extern   int       SetInfo           (IString Info);
+extern   int       SetInfo2          (IString Info);
+extern   int       SetIbStat         (IString IBInfo ,IString IBStat);
+//  IString   Headerline1       ();
 
 
 /******************************** Prototypes **********************************/

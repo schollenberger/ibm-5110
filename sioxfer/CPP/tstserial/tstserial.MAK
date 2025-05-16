@@ -31,17 +31,17 @@ all:  tstserial.exe
 
 #tstserial.exe:  rserial.obj usbsio.obj tstserial.obj
 #      $(GLINK) $(GCPPLFLAGS) $(GCPPFLAGS) /Fe"tstserial.exe" \
-#      rserial.obj usbsio.obj tstserial.obj $(GPERFOBJ)
+#      rserial.obj usbsio.obj tstserial.obj $(GPERFOBJ) 
 
 tstserial.exe:  rserial.obj usbsio.obj tstserial.obj
       $(GLINK)   $(GCPPFLAGS) /Fe"tstserial.exe" \
-      rserial.obj usbsio.obj tstserial.obj
+      rserial.obj usbsio.obj tstserial.obj 
 
 rserial.obj:  rserial.cpp rserial.h
       $(GCPPC) /C+ $(GCPPFLAGS) rserial.cpp
 
 usbsio.obj:  usbsio.cpp usbsio.hpp rserial.h globals.h
-      $(GCPPC) /C+ $(GCPPFLAGS) usbsio.cpp
+      $(GCPPC) /C+ $(GCPPFLAGS) usbsio.cpp 
 
 tstserial.obj:  tstserial.cpp tstserial.h globals.h
       $(GCPPC) /C+ $(GCPPFLAGS) tstserial.cpp

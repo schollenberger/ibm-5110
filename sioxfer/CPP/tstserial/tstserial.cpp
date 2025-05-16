@@ -37,14 +37,15 @@
   int       TotRunTime                              ; /* Total RunTime        */
  
   int       P1             = 0                      ; /*                      */
-  int       P2             = 0                      ; /*                      */
+  int       P2             = 1                      ; /* Trace flag           */
   int       P3             = 0                      ; /*                      */
-  int       P4             = 0                      ; /*                      */
-  int       P5             = 0                      ; /*                      */
-  int       P6             = 0                      ; /*                      */
-  int       P7             = 0                      ; /*                      */
+                                                      /* SIO options          */
+  int       P4             = 1                      ; /*  RS                  */
+  int       P5             = 1                      ; /*  ME                  */
+  int       P6             = 1                      ; /*  PE                  */
+  int       P7             = 1                      ; /*  FE                  */
 
-  IString   P11$           = "COM2"                 ; /*                      */
+  IString   P11$           = "COM0"                 ; /*                      */
   IString   P12$           = "9600"                 ; /*                      */
   IString   P13$           = "N"                    ; /*                      */
   IString   P14$           = "8"                    ; /*                      */
@@ -55,7 +56,7 @@
   IString   P19$           = "EBCDIC"               ; /*                      */
   IString   P20$           = 99999                  ; /*                      */
   IString   P21$           = "0"                    ; /*                      */
-  IString   P22$           = ""                     ; /*                      */
+  IString   P22$           = ""                     ; /* extended sio options */
   IString   P17b$          =""                      ; /*                      */
   IString   T18$           = P18$                   ; /*                      */
   IString   T19$           = P19$                   ; /*                      */
@@ -66,14 +67,22 @@
   IString   C16$           = "1 2";
   IString   C17$           = "0 1 2 3 4 5 6 7 8";
 
+  int       rc             = 0                      ; /* returncode           */
+  int       Rcc            = 0                      ; /* returncode           */
+  int       MaxRc          = 0                      ; /* Max. returncode      */
+  int       Fails          = 0                      ; /* nr. of fails         */
+
   IString   Sep            = "\x5C"                 ; /* "\" used for DOS     */
   IString   CurDir         = "."                    ; /* current directory    */
   IString   WorkDir        = "."                    ; /* workdirectory        */
   IString   ToolsDir       = "D:"+Sep+"TOOLS"+Sep+"bin"; /* toolsdirectory    */
   IString   OutMsg         = ""                     ; /* message              */
 
+  int       DFlg           = 1                      ; /* Debug flag           */
+
   int       SIO_CFlg       = 0                      ; /* Code Pages in Msg Fil*/
   int       SIO_DFlg       = 0                      ; /* SIO debug flag       */
+                                                      /* If set COM port simulated */
   int       SIO_TFlg       = 0                      ; /* SIO trace flag       */
   int       SIO_SFlg       = 0                      ; /* SIO status flag      */
 
@@ -100,7 +109,7 @@
   IString   ME$            = ""                     ; /* SioOptions$          */
   IString   PE$            = ""                     ; /* SioOptions$          */
   IString   FE$            = ""                     ; /* SioOptions$          */
-  IString   Bits$          = "8"                    ; /* P14$ = 8,H,P         */
+  IString   Bits$          = ""                     ; /* P14$ = 8,H,P         */
 
 
 
@@ -116,7 +125,6 @@
   IString   Ctlfile$       = ""                     ; /* Control File         */
   IString   Ctl_File                                ; /* Control File         */
   IString   DmpTline$      = ""                     ; /* Dump Tline           */
-  int       rc             = 0                      ; /* returncode           */
 
   IString   TraFile        = Prog                   ; /* tracefile            */
   IString   Tra_File       = TraFile+".TRA"         ; /* tracefile            */
@@ -150,9 +158,6 @@
   IString   Inpline_uc_g   = ""                     ; /* inputline uc modified*/
   int       ContFlg        = 0                      ; /* continue flag        */
   int       StopFlg        = 0                      ; /* stop flag            */
-
-
-  int       DFlg           = 0                      ; /* Debug flag           */
 
   int       PS_Flg         = 0                      ; /* txt2ps flag          */
   int       found          = 0                      ; /* found temp flag      */
@@ -211,18 +216,30 @@ int main(int argc, char **argv)
     SetFile = strupr(argv[1]);
     }
 */
- 
+
+
+  if (P2 == 1 )
+    {
+    OpenTraFile();
+    }
+
+  cout << "Press enter to start..." << endl;
+  getch();
   cout << "The work begins..." << endl;
 
-  INIT();
+  OpenComPort();
 
   IString isMsg = "Hallo du da";
 
+  cout << "COM Port open" << endl;
+  cout << "Sending: <" << isMsg <<  ">" << endl;
   PUTS(isMsg);
+
   cout << "Waiting for input on serial..." << endl;
+  isMsg = GETS(256);
+  cout << "Received: <" << isMsg <<  ">" << endl;
 
-  GETS(10);
-
+  cout << "Closing COM Port" << endl;
   com->disconnect();
 
   cout << "...done." << endl;
@@ -278,10 +295,17 @@ void GetCurDir(IString& Prog, IString& CurDir)
       if (P6==0) {PE$="";} else {PE$=",PE";}
       if (P7==0) {FE$="";} else {FE$=",FE";}
       }
-    Tra=1; Hex=0; Pdf=0;
+//    Tra=1; Hex=0; Pdf=0;
     if (P14$.indexOf("8HP")>0) {Bits$="8";} else {Bits$=P14$;}
     SioOptions$=RS$+P22$+PE$+ME$+FE$; SioOptions$.strip();
+
     MsgFile << "-- : OpenComPort" << endl;
+    if (P2==1)
+      {
+      TracFile << "OpenComPort(): Bits$ = <" << Bits$ << ">" << endl;
+      TracFile << "OpenComPort(): SioOptions$ = = <" << SioOptions$ << ">" << endl;
+//      TracFile.flush();
+      }
     INIT();
     return;
     }
@@ -290,12 +314,16 @@ void GetCurDir(IString& Prog, IString& CurDir)
   void OpenTraFile()
     {
     MsgFile << "-- : Open " << Tra_File << endl;
-    Tra_File = TraFile+".TRA";
+    //Tra_File = TraFile+".TRA";
     TracFile.close();
-    ofstream TracFile(Tra_File);
+    //ofstream TracFile(Tra_File);
+    TracFile.open(Tra_File);
     TracFile << Tra_File << " started: " << Date << endl;
     return;
     }
+
+
+
 
   void PutFile()
     {
@@ -399,18 +427,25 @@ void GetCurDir(IString& Prog, IString& CurDir)
 /*** SetInfo ******************************************************************/
 int SetInfo(IString Info)
   {
-  cout << "Setinfo:" << Info << endl;
+  cout << "Setinfo(): Info = " << Info << endl;
   return 0;
   }
 
 /*** SetInfo2 *****************************************************************/
 int SetInfo2(IString Info)
   {
-  cout << "Setinfo2:" << Info << endl;
+  cout << "Setinfo2(): Info = " << Info << endl;
+  return 0;
+  }
+/*** SetIbStat ****************************************************************/
+  int SetIbStat(IString IbInfo, IString IbStat)
+  {
+  cout << "SetIbstat(): Info = " << IbInfo << "  Status = " << IbStat <<endl;
   return 0;
   }
 
-  void CodeSel()
+
+void CodeSel()
     {
     if (P14$=="5") {Tra=1; Hex=0; Pdf=0;}
     if (P14$=="6") {Tra=1; Hex=0; Pdf=0;}
@@ -449,6 +484,7 @@ int SetInfo2(IString Info)
     {
     return;
     }
+
 /*** CodeTranslation **********************************************************/
   IString CodeTrans(IString Incode, IString Outcode, IString Instring)
     {
@@ -470,6 +506,24 @@ int SetInfo2(IString Info)
     return Outstring;
     }
 
+/*** error handling routine and write infos, warnings and errors to MsgFile ***/
+void error(int& Rcc, int& MaxRc, int& Fails, IString& OutMsg, ofstream& MsgFile)
+    {
+    IString Rcct;
+    int Rc;
+    Rcct = itoa(Rcc,Rcct,10);                         /* Rcct = 2 digits      */
+    Rcct = "0" + Rcct;
+    Rcct = Rcct.subString(Rcct.length()-1);
+    Rcct = Rcct+" "+OutMsg;
+    MsgFile << Rcct << endl;
+    if (Rcc>5) {Fails = Fails+1;}                     /* count only Rcc > 5   */
+    if (Rcc>MaxRc) {MaxRc = Rcc;}                     /* MaxRc = highest Rcc  */
+    if (MaxRc>29)                                     /* Terminate program    */
+      {
+      exit(MaxRc);
+      }
+    return;
+    }
 
 
 

@@ -23,8 +23,8 @@
 // #include <process.h> removed by H.Ruffner 2023/02/21
 #include <conio.h>
 #include <windows.h>
-
-#include "rserial.h"
+#include "globals.h"
+#include "Rserial.h"
 
   Rserial::Rserial()
     {
@@ -91,36 +91,44 @@
       dcb.XoffChar        = 0x19;
       dcb.EvtChar         = 0;
 
-      dcb.Parity          = NOPARITY;
-      dcb.fParity         = 0;
-      dcb.ByteSize        = 8;
+//      dcb.Parity          = NOPARITY;
+//      dcb.fParity         = 0;
+//      dcb.ByteSize        = 8;
 
 /* -- Serial Port Config real --- */
       dcb.BaudRate        = rate;
-      dcb.ByteSize        = bits;
+//      dcb.ByteSize        = bits;
       if      (parity=="N") {dcb.Parity = NOPARITY;   dcb.fParity = 0;}
       else if (parity=="E") {dcb.Parity = EVENPARITY; dcb.fParity = 1;}
       else if (parity=="O") {dcb.Parity = ODDPARITY;  dcb.fParity = 1;}
+      
       if      (stop==1) {dcb.StopBits = ONESTOPBIT;}
       else if (stop==2) {dcb.StopBits = TWOSTOPBITS;}
+
       if      (bits==8) {dcb.ByteSize = 8;}
       else if (bits==7) {dcb.ByteSize = 7;}
       else if (bits==6) {dcb.ByteSize = 6;}
       else if (bits==5) {dcb.ByteSize = 5;}
 
 /* -- Set options ----------- --- */
+      MsgFile << "## options before: <" << options << ">" << endl;
+
       options.translate(',',' ');
       opts = options.numWords();
+      MsgFile << "## options after : <" << options << ">" << endl;
+      MsgFile << "## options numwords: <" << opts << ">" << endl;
+
+
       for (op=1; op<=opts; op++)
         {
-        if (options.word(op).subString(1,2)=="RS") {}
-//        {dcb.fRtsControl=RTS_CONTROL_DISABLE;}
-        else if (options.word(op).subString(1,2)=="CS"){}
-//        {dcb.fOutxCtsFlow=atol(options.word(op).subString(3));}
+        if (options.word(op).subString(1,2)=="RS")
+          {dcb.fRtsControl=RTS_CONTROL_DISABLE;}
+        else if (options.word(op).subString(1,2)=="CS")
+          {dcb.fOutxCtsFlow=atol(options.word(op).subString(3));}
         else if (options.word(op).subString(1,2)=="DS")
           {dcb.fOutxDsrFlow=atol(options.word(op).subString(3));}
-//      else if (options.word(op).subString(1,2)=="CD")
-//        {dcb.fOutxCtsFlow=atol(options.word(op).subString(3));}
+        else if (options.word(op).subString(1,2)=="CD")
+          {dcb.fOutxCtsFlow=atol(options.word(op).subString(3));}
 
 //      if (options.word(op).subString(1,2)=="LF")
 //        {dcp.                               }
@@ -134,14 +142,13 @@
 //        {dcp.                               ;}
 //      if (options.word(op).subString(1,2)=="IR")
 //        {dcp.                               ;}
+MsgFile << options.word(op) << " " << atol(options.word(op).subString(3)) << endl;
         }
 
 /* ------------------------------ */
         serial_handle    = CreateFile(port, GENERIC_READ | GENERIC_WRITE,
-                               0, NULL,
-                                                            OPEN_EXISTING,
-                                                                0, // was null
-                                                                NULL);
+                               0, NULL, OPEN_EXISTING, 0, // was null
+                               NULL);
                    // opening serial port
 
 
@@ -161,6 +168,34 @@
         else
             erreur = 8;
 
+    if (DFlg==1)
+      {
+      MsgFile << endl;
+      MsgFile << "-- dcb.BaudRate        = " << dcb.BaudRate        << endl;
+      MsgFile << "-- dcb.Parity          = " << dcb.Parity          << endl;
+      MsgFile << "-- dcb.fParity         = " << dcb.fParity         << endl;
+      MsgFile << "-- dcb.ByteSize        = " << dcb.ByteSize        << endl;
+      MsgFile << "-- dcb.StopBits        = " << dcb.StopBits        << endl;
+      MsgFile << "-- dcb.fRtsControl     = " << dcb.fRtsControl     << endl;
+      MsgFile << "-- dcb.fOutxCtsFlow    = " << dcb.fOutxCtsFlow    << endl;
+      MsgFile << "-- dcb.fOutxDsrFlow    = " << dcb.fOutxDsrFlow    << endl;
+      MsgFile << "-- dcb.fDtrControl     = " << dcb.fDtrControl     << endl;
+      MsgFile << "-- dcb.fDsrSensitivity = " << dcb.fDsrSensitivity << endl;
+      MsgFile << "-- dcb.fRtsControl     = " << dcb.fRtsControl     << endl;
+      MsgFile << "-- dcb.fOutX           = " << dcb.fOutX           << endl;
+      MsgFile << "-- dcb.fInX            = " << dcb.fInX            << endl;
+      MsgFile << "-- dcb.fErrorChar      = " << dcb.fErrorChar      << endl;
+      MsgFile << "-- dcb.fBinary         = " << dcb.fBinary         << endl;
+
+      MsgFile << "-- dcb.fNull           = " << dcb.fNull           << endl;
+      MsgFile << "-- dcb.fAbortOnError   = " << dcb.fAbortOnError   << endl;
+//      MsgFile << "-- dcb.wReserved       = " << dcb.wReserved       << endl;
+      MsgFile << "-- dcb.XonLim          = " << dcb.XonLim           << endl;
+      MsgFile << "-- dcb.XoffLim         = " << dcb.XoffLim          << endl;
+      MsgFile << "-- dcb.XonChar         = " << dcb.XonChar          << endl;
+      MsgFile << "-- dcb.XoffChar        = " << dcb.XoffChar         << endl;
+      MsgFile << "-- dcb.EvtChar         = " << dcb.EvtChar          << endl;
+      }
     }
     else
         erreur = 16;
@@ -171,6 +206,10 @@
       {
       CloseHandle(serial_handle);
       serial_handle = INVALID_HANDLE_VALUE;
+      }
+    if (DFlg==1)
+      {
+      MsgFile << "Rserial::connect() - returned with " << erreur << " serial_handle = " << serial_handle <<endl;
       }
     return(erreur);
     }

@@ -10,3 +10,13 @@ Thumbs.db
 */__pycache__/
 */*.py[cod]
 */*$py.class
+
+# CPP 
+*.obj
+*.exe
+*.pdb
+
+# Excecution results
+*.TRA
+*.MSG
+

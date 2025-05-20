@@ -47,6 +47,7 @@
       CloseHandle(serial_handle);
     serial_handle = INVALID_HANDLE_VALUE;
     }
+
   int  Rserial::connect (char *port_arg, int baud, IString parity, int bits, int stop, IString options)
     {
     int erreur, op, opts;
@@ -55,7 +56,7 @@
 ////cto.ReadIntervalTimeout = MAXDWORD; /*  immediate timeout */
 /* ------------------------------ */
     if (serial_handle!=INVALID_HANDLE_VALUE)
-    CloseHandle(serial_handle);
+        CloseHandle(serial_handle);
     serial_handle = INVALID_HANDLE_VALUE;
 
     erreur = 0;
@@ -101,7 +102,7 @@
       if      (parity=="N") {dcb.Parity = NOPARITY;   dcb.fParity = 0;}
       else if (parity=="E") {dcb.Parity = EVENPARITY; dcb.fParity = 1;}
       else if (parity=="O") {dcb.Parity = ODDPARITY;  dcb.fParity = 1;}
-      
+
       if      (stop==1) {dcb.StopBits = ONESTOPBIT;}
       else if (stop==2) {dcb.StopBits = TWOSTOPBITS;}
 
@@ -142,15 +143,14 @@
 //        {dcp.                               ;}
 //      if (options.word(op).subString(1,2)=="IR")
 //        {dcp.                               ;}
-MsgFile << options.word(op) << " " << atol(options.word(op).subString(3)) << endl;
-        }
+        MsgFile << options.word(op) << " " << atol(options.word(op).subString(3)) << endl;
+        }  /* connect() */
 
 /* ------------------------------ */
         serial_handle    = CreateFile(port, GENERIC_READ | GENERIC_WRITE,
-                               0, NULL, OPEN_EXISTING, 0, // was null
-                               NULL);
+									0, NULL, OPEN_EXISTING, 0, // was null
+									NULL);
                    // opening serial port
-
 
         if (serial_handle    != INVALID_HANDLE_VALUE)
         {
@@ -209,10 +209,10 @@ MsgFile << options.word(op) << " " << atol(options.word(op).subString(3)) << end
       }
     if (DFlg==1)
       {
-      MsgFile << "Rserial::connect() - returned with " << erreur << " serial_handle = " << serial_handle <<endl;
+      MsgFile << "Rserial::connect() - returned with error = " << erreur << "   serial_handle = " << serial_handle <<endl;
       }
     return(erreur);
-    }
+    } /* connect() */
 
 
 /* ------------------------------ */

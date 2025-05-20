@@ -4,7 +4,7 @@
 * .DESCRIPTION:  USBSIO Program Version 2:  Class Implementation               *
 *                19.02.2023 modified from USBPIO (remove IEEE Bus functions)   *
 *                10.05.2025 removed Windows stuff to compile as command line   *
-*                           program                                            *   
+*                           program                                            *
 *                                                                              *
 * .CLASSES:      UsbSioWindow                                                  *
 *                IbCommandHandler                                              *
@@ -50,7 +50,7 @@
 
 
 /******************************** Functions ******************************/
-/*  defined in header file 
+/*  defined in header file
 *   void     INIT     ();
 *   void     PUTS     (IString&);
 *   IString  GETS     (int);
@@ -74,11 +74,15 @@
 
     IString Port, Parity, SIO_Options, Comparm;
     int Baud, Bits, StopBits;
+
+    int lrc;  // local return code
+    IString is_lrc; // return code as IString
+
     DCB dcb;
     serial_parity parity_arg;
     MsgFile << "-- : ** com disconnect **" << endl;
     com=new Rserial();
-    com->disconnect();
+    //com->disconnect();
     if (SIO_DFlg == 0)
     {
       Port=P11$;
@@ -87,7 +91,7 @@
       Bits=atoi(Bits$);
       StopBits=atoi(P16$);
 //      SIO_Options="";
-      SIO_Options=SioOptions$;
+      SIO_Options=SioOptions$;  // *WSB* copy global sio options set in caller OpenComPort()
 //      if (P4==1) {SIO_Options=",RS";}
 //      if (P5==1) {SIO_Options=",ME";}
 //      if (P6==1) {SIO_Options=",PE";}
@@ -104,19 +108,26 @@
         }
       MsgFile << "-- : ** com connect **" << endl;
 
-      cout << "INIT(): SIO_Options: <" << SIO_Options << ">" << endl;
+      // cout << "INIT(): SIO_Options: <" << SIO_Options << ">" << endl;
 
-      com->connect(Port, Baud, Parity, Bits, StopBits, SIO_Options);
+      lrc = com->connect(Port, Baud, Parity, Bits, StopBits, SIO_Options);
     } else {
+	  lrc = 0;
       MsgFile << "INIT(): simulating COM port - skipping connect()" << endl;
     }
     IBFunc="INIT"; IBStat="--";                       /* SET CONTROLLER FLAG  */
-    IBInfo="INIT "+Port;
+    is_lrc = lrc;
+    IBInfo="INIT "+Port+" - rc = "+ is_lrc;
     MsgFile << "-- : ** INIT() End **" << endl;
     SIOTrac(IBInfo);
     if (SIO_SFlg == 1) {SetIbStat(IBInfo, IBStat);}
-
-    return; /* end INIT */
+    if (lrc != 0)
+	{
+		rc = lrc;
+		MsgFile << "INIT(): Failed to open COM port "+Port+" error code = "
+			+is_lrc+" updated global rc variable" << endl;
+	}
+    return; /* end INIT() */
     }
 /* -------------------------------*/
   void PUTS(IString& OutDat)
@@ -130,7 +141,7 @@
       {MsgFile << "-- ** PUTS ** " << tmp1 << endl;}
 // else
       {PutCom(tmp1,tmp1.length());}
-    return; /* end PUTS */
+    return; /* end PUTS() */
     }
 /* -------------------------------*/
   IString GETS(int Recl_)

@@ -11,7 +11,9 @@
 *******************************************************************************/
 #include <conio.h>
 #include <stdio.h>
+#include <istring.hpp>
 #include <iostream.h>
+#include <istring.hpp>
 
 #include "globals.h"
 #include "usbsio.hpp"
@@ -35,7 +37,7 @@
   time_t    StopTime       = time(NULL)             ; /* Stop  Time           */
   int       RunTime                                 ; /* RunTime              */
   int       TotRunTime                              ; /* Total RunTime        */
- 
+
   int       P1             = 0                      ; /*                      */
   int       P2             = 1                      ; /* Trace flag           */
   int       P3             = 0                      ; /*                      */
@@ -45,7 +47,7 @@
   int       P6             = 1                      ; /*  PE                  */
   int       P7             = 1                      ; /*  FE                  */
 
-  IString   P11$           = "COM0"                 ; /*                      */
+  IString   P11$           = "COM2"                 ; /*                      */
   IString   P12$           = "9600"                 ; /*                      */
   IString   P13$           = "N"                    ; /*                      */
   IString   P14$           = "8"                    ; /*                      */
@@ -204,7 +206,7 @@ int main(int argc, char **argv)
   WorkDir = CurDir;
 
   cout << Prog << " Work dir: " << WorkDir << endl;
- 
+
 
 /*
   if (argc == 0)
@@ -228,19 +230,25 @@ int main(int argc, char **argv)
   cout << "The work begins..." << endl;
 
   OpenComPort();
+  if (rc == 0)
+  {
+	IString isMsg = "Hallo du da";
 
-  IString isMsg = "Hallo du da";
+	cout << "COM Port open" << endl;
+	cout << "Sending: <" << isMsg <<  ">" << endl;
+	PUTS(isMsg);
 
-  cout << "COM Port open" << endl;
-  cout << "Sending: <" << isMsg <<  ">" << endl;
-  PUTS(isMsg);
+	cout << "Waiting for input on serial..." << endl;
+	isMsg = GETS(256);
+	cout << "Received: <" << isMsg <<  ">" << endl;
 
-  cout << "Waiting for input on serial..." << endl;
-  isMsg = GETS(256);
-  cout << "Received: <" << isMsg <<  ">" << endl;
-
-  cout << "Closing COM Port" << endl;
-  com->disconnect();
+    cout << "Closing COM Port" << endl;
+    com->disconnect();
+  }
+  else
+  {
+	cout << "Failed to open COM port!!" << endl;
+  }
 
   cout << "...done." << endl;
 
@@ -299,7 +307,7 @@ void GetCurDir(IString& Prog, IString& CurDir)
     if (P14$.indexOf("8HP")>0) {Bits$="8";} else {Bits$=P14$;}
     SioOptions$=RS$+P22$+PE$+ME$+FE$; SioOptions$.strip();
 
-    MsgFile << "-- : OpenComPort" << endl;
+    MsgFile << "-- : OpenComPort()" << endl;
     if (P2==1)
       {
       TracFile << "OpenComPort(): Bits$ = <" << Bits$ << ">" << endl;
@@ -321,8 +329,6 @@ void GetCurDir(IString& Prog, IString& CurDir)
     TracFile << Tra_File << " started: " << Date << endl;
     return;
     }
-
-
 
 
   void PutFile()
@@ -378,7 +384,7 @@ void GetCurDir(IString& Prog, IString& CurDir)
   IString   temp0          = ""                     ; /* temp variable        */
   IString   temp1          = ""                     ; /* temp variable        */
   IString   temp2          = ""                     ; /* temp variable        */
-  
+
     CodeSel();
     eof=0;
     Recs=0;

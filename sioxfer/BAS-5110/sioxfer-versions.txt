@@ -1,8 +1,9 @@
 SIOXFER on 5110 Versions
 
 26.08.2023 Werner Schollenberger
+20.05.2025 WSB - update
 
-In order to compare different versions of basic programs 
+In order to compare different versions of basic programs
 first stip off the line numbers. This allows you to identify
 identical commands after a basic renumber operation.
 
@@ -12,31 +13,51 @@ You can use the script "slinenum.sh [<fn>]". E.g.
         diff xx1 xx2 > <v1>_<v2>.cm
 
 
-1st commit of sioxfer.bas:  sioxfer-5011-V2006-12-05.bas  - Version SIOXFER EC.2006/12/05 H.RUFFNER
- - first known vesion so far.
- - HEX transformation starting from 0x00 - 0xff
+1st commit of sioxfer.bas:  d9cca16fbe016bed38d70cdd3e9e3192cd17018b
+  First version of sioxfer 5100 basic program Date: 2006-12-05
 
-2nd commit of sioxfer.bas:  sioxfer-5011-V2007-10-12.bas  - Version SIOXFER EC.2007/10/12 H.RUFFNER
- - HEX transformation array changed to decending (0xff-0x00) for performance reasons
+  sioxfer-5011-V2006-12-05.bas  - Version SIOXFER EC.2006/12/05 H.RUFFNER
+    - first known vesion so far.
+    - HEX transformation starting from 0x00 - 0xff
 
-3rd commit of sioxfer.bas:  sioxfer-5011-V2007-10-22.bas  - Version SIOXFER EC.2007/10/22 H.RUFFNE
- - ??
+2nd commit of sioxfer.bas:  be7de9c556098f85272730c711337cc2b7dd97a0
+  2nd version of sioxfer 5100 basic program Date: 2007-10-12
 
-Further versions - not committed yet:
+  sioxfer-5011-V2007-10-12.bas  - Version SIOXFER EC.2007/10/12 H.RUFFNER
+    - HEX transformation array changed to decending (0xff-0x00) for performance reasons
 
-sioxfer-5011-V2023-07-18.bas  - Vesion SIOXFER EC.2023/07/18 H.RUFFNER
-- version 2 with changes in protocol (File type spec)
-- not compatible to version 1
-- new ALC(5100) Char table, 
-- looks like in-between version - not finished
+3rd commit of sioxfer.bas:  e5a2cb3d36cb86a05b4326266822bf2f6df9c286
+  3rd version of sioxfer 5100 basic program Date: 2007-10-22
+
+  sioxfer-5011-V2007-10-22.bas  - Version SIOXFER EC.2007/10/22 H.RUFFNE
+    - ??
+
+4th commit of sioxfer.bas:  ccd208b6dc961394c4f3350e3785e929951bf617
+  sioxfer Ver 2023-07-18 - 5100 basic program
+
+	sioxfer-5011-V2023-07-18.bas  - Vesion SIOXFER EC.2023/07/18 H.RUFFNER
+	- version 2 with changes in protocol (File type spec)
+	- not compatible to version 1
+	- new ALC(5100) Char table,
+	- looks like in-between version - not finished
+
+5th commit of sioxfer.bas:  72e49924c6fef6b134f331606bf595d6e29cc5be
+  sioxfer Ver 2023-07-23 - 5100 basic program
+
+	sioxfer-5011-V2023-07-23.bas  - Vesion SIOXFER EC.2023/07/23 H.RUFFNER
+	 - version 2
+	 - New File type "500"
+	 - Code Page support in filetype spec
 
 
-sioxfer-5011-V2023-07-23.bas  - Vesion SIOXFER EC.2023/07/23 H.RUFFNER
- - version 2
- - New File type "500" 
- - Code Page support in filetype spec
+6th commit of sioxfer.bas:  23f607359707842d2604f053b9f7c37e0459ed01
+   sioxfer Ver 2023-08-01 - 5100 basic program
 
-sioxfer-5011-2023-08-01.bas  - Version SIOXFER EC.2023/08/01 H.RUFFNER
- - version 2
- - Filetype "500" changed to "PRT"
- - latest vesion from Horst Ruffner - as of Aug 2023
+	 sioxfer-5011-2023-08-01.bas  - Version SIOXFER EC.2023/08/01 H.RUFFNER
+	  - version 2
+	  - Filetype "500" changed to "PRT"
+	  - latest vesion from Horst Ruffner - as of Aug 2023
+
+7th commit of sioxfer.bas:
+  ## so far for today ##
+	

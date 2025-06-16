@@ -59,5 +59,9 @@ You can use the script "slinenum.sh [<fn>]". E.g.
 	  - latest vesion from Horst Ruffner - as of Aug 2023
 
 7th commit of sioxfer.bas:
-  ## so far for today ##
+   Ver_3/sioxfer   Version *** SIOXFER EC.2025/02/14 H.RUFFNER 
+	  SIOXFERS.T09 from directory sioxfer/TEST8 from 2025-05-20
+	   - pre-version of version 3
+	   - support of 7-Bit serial driver
+
 	

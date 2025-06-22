@@ -247,8 +247,9 @@ OpenCom:                                                'Open Com port
   GOTO SMenu1
 
 CloseCom:                                               'Close Com port
-  SIO.Dflg%=1
-  CALL INIT(P11$,P12$,P13$,P14$,P15$,P16$,SioOptions$,SIO.Dflg%)
+'  SIO.Dflg%=1
+'  CALL INIT(P11$,P12$,P13$,P14$,P15$,P16$,SioOptions$,SIO.Dflg%)
+  CALL SHUTDOWN(P11$,SIO.Dflg%)
   CALL IbStat("  ")
   PRINT #6,"SIOXFER CLOSE ";DATE$;" ";TIME$
   Men1%=2

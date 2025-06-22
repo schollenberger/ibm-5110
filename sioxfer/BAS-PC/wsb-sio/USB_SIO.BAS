@@ -66,6 +66,7 @@ IB.DEB:                                          'Debug Routine for SIO
    SIO.BRK$=""
    WHILE SIO.BRK$<>CHR$(27)
      A$ = GETS$(4) : CALL WrCha(22,1,60,A$) : DELAY(RN)
+     SIO.BRK$=INKEY$
    WEND
    RETURN
  Pmenu6:                                         'RPUT (Put String on Bus)
@@ -149,6 +150,13 @@ FUNCTION INIT(Port$,Baud$,Parity$,Bits$,Recl$,SBits$,SioOptions$,Flg%) SHARED
   END IF
 END FUNCTION
 
+FUNCTION SHUTDOWN(Port$,Flg%) SHARED
+  PRINT #5,"CLOSE ";CHR$(34);Port$;CHR$(34);" AS #7            Flg%=";Flg%
+  IF Flg%=0 THEN
+    CLOSE #7
+  END IF
+END FUNCTION
+
 FUNCTION PutS(InputlineP$) SHARED '*********** PUTS  ( Outputline$ BUSOUT ) ****
   SIO.FCTN$="PUTS"
   CALL IbStat(">>")
@@ -157,10 +165,12 @@ FUNCTION PutS(InputlineP$) SHARED '*********** PUTS  ( Outputline$ BUSOUT ) ****
   REPLACE CHR$(26) WITH CHR$(223) IN InputlineP$  ' x'1A' does close files!
   CharIndex%=1
   Buf$="   "
-  IF SIO.Dflg%=1 THEN
-    PRINT #5,"** PUTS-";InputlineP$
-  ELSE
+  PRINT #5,"** PUTS-- SIO-Debug =";SIO.Dflg%
+  PRINT #5,"** PUTS->" ;InputlineP$
+
+  IF SIO.Dflg=0 THEN
     PRINT #7, InputlineP$
+    PRINT #5,"** PUTS-- Send completed"
   END IF
   IF P1=1 THEN
     CALL Info("** PUTS-"+InputlineP$,2,0)
@@ -184,7 +194,7 @@ FUNCTION GetS$(LRec) SHARED '************** GETS  ( BUSIN Datstr$ ) ************
   InputlineG$=""
   FOR i%=1 TO LRec : IRun%=0
     IF SIO.Dflg%=1 THEN
-'PRINT #5,LEN(ASCFILE1$),LEN(ASCFILE2$),LEN(ASCFILE3$)
+'PRINT #5,"** GETS -- ";LEN(ASCFILE1$),LEN(ASCFILE2$),LEN(ASCFILE3$)
       IF P21$="0" THEN
         IByte$="9"
         GOTO GET0
@@ -215,8 +225,9 @@ FUNCTION GetS$(LRec) SHARED '************** GETS  ( BUSIN Datstr$ ) ************
       END IF
     ELSE
       IByte$=INPUT$(1,#7)
+      PRINT #5,"** GETS <= ";IByte$
     END IF
-   GET0:
+    GET0:
       Buf$=RIGHT$(Buf$,2)+IByte$
     IF Tra%=1 THEN
       InputlineG$=InputlineG$+IByte$
@@ -256,7 +267,9 @@ PRINT #5,CHR$(j%);
    GETBS:
   NEXT i%
    ENDGS:
-PRINT #5,InputlineG$
+PRINT #5,"**GETS-- Received ";LEN(InputlineG$);" Character."
+PRINT #5,"**GETS<-";InputlineG$
+
      IF Ig151E%=1 THEN : REPLACE LFE$     WITH ""        IN InputlineG$
      IF Ig15%  =1 THEN : REPLACE CHR$(21) WITH CHR$(223) IN InputlineG$
      IF Ig04%  =1 THEN : REPLACE CHR$( 4) WITH CHR$(223) IN InputlineG$
@@ -267,6 +280,7 @@ PRINT #5,InputlineG$
 '    IF IgS3%  =1 THEN : REPLACE CHR$(??) WITH CHR$(223) IN InputlineG$
 '    IF IgS4%  =1 THEN : REPLACE CHR$(??) WITH CHR$(223) IN InputlineG$
   Outputline$=InputlineG$
+  PRINT #5,"**GETS-- Returning: ";OutputLine$
   GetS$=Outputline$
   CALL IbStat(" >")
   RECS=RECS+1
@@ -297,4 +311,3 @@ SUB IbStat (Stat$) SHARED '************ Ib Status ******************************
   CALL WrCha(25,78,2,Stat$)
 ' DELAY(0.1)
 END SUB
-

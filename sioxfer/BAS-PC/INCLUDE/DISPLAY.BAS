@@ -1,11 +1,20 @@
-    REM DISPLAY SUBROUTINES WRITTEN BY H.RUFFNER         04/02/92
+'*******************************************************************************
+'*      DISPLAY SUBROUTINES WRITTEN BY H.RUFFNER         04/02/92              *
+'*                                                                             *
+'* Changes:                                                                    *
+'*                                                                             *
+'* Date       Changed by Reason                                                *
+'* 03/30/2023 H.Ruffner  Add SpinBut, ChkBox, EntrFld function                 *
+'*                                                                             *
+'*                                                                             *
+'*******************************************************************************
 
 SUB LiPrt(L%,WC$,CFT%,CBT%)                      'LINE PRINT
     '(L%=LINE, WC$=TEXT, CFT%=COLOR FOREGROUND TEXT, CBT%=COLOR BACKGROUNG TEXT)
       WC$=WC$+SPACE$(80-LEN(WC$)) : LOCATE L%,1,0 : COLOR CFT%,CBT% : PRINT WC$;
 END SUB
 
-SUB SetCol(L1%,C1%,L2%,C2%,CFT%,CBT%)            'SET COLORS WITHOUT CHANGING CHARACTERS
+SUB SetCol(L1%,C1%,L2%,C2%,CFT%,CBT%)         'SET COLORS WITHOUT CHANGING CHARACTERS
     '(L1%=FIRST LINE, C1%=FIRST COLUMN,
     ' L2%=LAST  LINE, C2%=LAST  COLUMN, CFT%=COLOR FOREGROUND TEXT, CBT%=COLOR BACKGROUNG TEXT)
       DEF SEG=&HB800
@@ -16,14 +25,14 @@ SUB SetCol(L1%,C1%,L2%,C2%,CFT%,CBT%)            'SET COLORS WITHOUT CHANGING CH
       NEXT L0%
 END SUB
 
-SUB ClrLin(L1%,L2%,CFT%,CBT%)                    'CLEAR LINES
+SUB ClrLin(L1%,L2%,CFT%,CBT%)                 'CLEAR LINES
     '(L1%=FIRST LINE, L2%=LAST  LINE, CFT%=COLOR FOREGROUND TEXT, CBT%=COLOR BACKGROUNG TEXT)
       FOR L0% = L1% TO L2%
         COLOR CFT%,CBT% : LOCATE L0%,1,0 : PRINT SPACE$(80);
       NEXT L0%
 END SUB
 
-SUB ClrBlk(L1%,C1%,L2%,C2%)                      'CLEAR BLOCK WITHOUT CHANGING COLORS
+SUB ClrBlk(L1%,C1%,L2%,C2%)                   'CLEAR BLOCK WITHOUT CHANGING COLORS
     '(L1%=FIRST LINE, C1%=FIRST COLUMN, L2%=LAST  LINE, C2%=LAST  COLUMN)
       DEF SEG=&HB800
       FOR L0% = L1% TO L2%
@@ -33,18 +42,18 @@ SUB ClrBlk(L1%,C1%,L2%,C2%)                      'CLEAR BLOCK WITHOUT CHANGING C
       NEXT L0%
 END SUB
 
-SUB WrCha(L%,C%,W%,WC$)                          'WRITE CHARACTERS WITHOUT CHANGING COLORS
+SUB WrCha(L%,C%,W%,WC$)                       'WRITE CHARACTERS WITHOUT CHANGING COLORS
     '(L%=LINE, C%=COLUMN, W%=WIDTH, WC$=TEXT)
       WC$=WC$+SPACE$(W%-LEN(WC$)) : DEF SEG=&HB800
       FOR C0% = 1 TO W% : POKE ((L%-1)*160 + (C0%+C%-2)*2), ASC(MID$(WC$,C0%,1)) : NEXT C0%
 END SUB
 
-SUB PrCha(L%,C%,W%,WC$,CFT%,CBT%)                'PRINT CHARACTERS
+SUB PrCha(L%,C%,W%,WC$,CFT%,CBT%)             'PRINT CHARACTERS
     '(L%=LINE, C%=COLUMN, W%=WIDTH, WC$=TEXT, CFT%=COLOR FOREGROUND TEXT, CBT%=COLOR BACKGROUNG TEXT)
       LOCATE L%,C%,0 : COLOR CFT%,CBT% : PRINT SPACE$(W%); : LOCATE L%,C%,0 : PRINT WC$;
 END SUB
 
-SUB RdCha(L%,C%,W%,RC$,CFI%,CBI%)                'READ CHARACTERS
+SUB RdCha(L%,C%,W%,RC$,CFI%,CBI%)             'READ CHARACTERS
     '(L%=LINE, C%=COLUMN, W%=WIDTH, RC$=TEXT, CFI%=COLOR FOREGROUND INPUT, CBI%=COLOR BACKGROUND INPUT)
      LOCAL C0%, CHAR$
      CALL SetCol(L%,C%,L%,C%+W%-1,CFI%,CBI%)
@@ -60,9 +69,11 @@ SUB RdCha(L%,C%,W%,RC$,CFI%,CBI%)                'READ CHARACTERS
      NEXT C0%
  RdCha3:
      FOR C0%=C% TO C%+W%-1 : MID$(RC$,C0%-C%+1,1)=CHR$(SCREEN(L%,C0%)) : NEXT C0%
+     CALL SetCol(L%,C%,L%,C%+W%-1,15,1)
 END SUB
 
-SUB RdDis(L%,C%,W%,RD$)                          'READ CHARACTERS
+
+SUB RdDis(L%,C%,W%,RD$)                       'READ CHARACTERS
     '(L%=LINE, C%=COLUMN, W%=WIDTH, RD$=TEXT)
      RD$=SPACE$(W%)
      LOCAL C0%
@@ -88,7 +99,7 @@ SUB RdNum(L%,C%,W%,RN,CFI%,CBI%)                 'READ NUMBERS (L%=LINE, C%=COLU
      FOR C0%=C% TO C%+W%-1 : RN$=RN$+CHR$(SCREEN(L%,C0%)) : NEXT C0% : RN=VAL(RN$)
 END SUB
 
-SUB RdHex(L%,C%,W%,RH$,CFI%,CBI%)                'READ HEXCHAR. (L%=LINE, C%=COLUMN, W%=WIDTH, RH$=HEXCHAR.)
+SUB RdHex(L%,C%,W%,RH$,CFI%,CBI%)             'READ HEXCHAR. (L%=LINE, C%=COLUMN, W%=WIDTH, RH$=HEXCHAR.)
     '(L%=LINE, C%=COLUMN, W%=WIDTH, RH$=HEXCHAR., CFI%=COLOR FOREGROUND INPUT, CBI%=COLOR BACKGROUND INPUT)
      LOCAL C0%, CHAR$
      CALL SetCol(L%,C%,L%,C%+W%-1,CFI%,CBI%)
@@ -108,7 +119,7 @@ SUB RdHex(L%,C%,W%,RH$,CFI%,CBI%)                'READ HEXCHAR. (L%=LINE, C%=COL
 END SUB
 
 SUB FSInp(L%,C%,WC$,CFT%,CBT%,CFI%,CBI%,CL%,CC%,LB%,LE%,CB%,CE%,ME$,ME%)
-                                                 'FULL SCREEN TEXTINPUT
+                                              'FULL SCREEN TEXTINPUT
     '(L%=LINE, C%=COLUMN, WC$=TEXT, CFT%=COLOR FOREGROUND TEXT,  CBT%=COLOR BACKGROUNG TEXT)
     '(                              CFI%=COLOR FOREGROUND INPUT, CBI%=COLOR BACKGROUND INPUT)
     '(                              CL% =CURSOR LINE POSITION,   CC% =CURSOR COLUMN POSITION)
@@ -132,15 +143,87 @@ SUB FSInp(L%,C%,WC$,CFT%,CBT%,CFI%,CBI%,CL%,CC%,LB%,LE%,CB%,CE%,ME$,ME%)
  FSInp3:
 END SUB
 
-SUB Enter                                        'WAIT FOR ENTER
+SUB Enter                                     'WAIT FOR ENTER
 Enter1:
-      IF INKEY$<>CHR$(13) GOTO Enter1 ELSE
+     IF INKEY$<>CHR$(13) GOTO Enter1 ELSE
 END SUB
 
-SUB UsDelay(t)                                   'Us Delay
-      Et1=0 : Et2=0
-      WHILE Et1<t
-        MTIMER : Et1=Et1+Et2: Et2=MTIMER
-      WEND
+SUB UsDelay(t)                                'Us Delay
+     Et1=0 : Et2=0
+     WHILE Et1<t
+       MTIMER : Et1=Et1+Et2: Et2=MTIMER
+     WEND
+END SUB
+
+SUB SpinBut(L%,C%,W%,IW$,CW$,WP%,OW$,CFI%,CBI%,ChFlg%)  'SPIN BUTTON
+    '(L%=LINE, C%=COLUMN, W%=WIDTH, IW$=INWORD, CW$=CHKWORD, WP%=WORDPOSITION,
+    'OW$=OUTWORD, CFI%=COLOR FOREGROUND INPUT, CBI%=COLOR BACKGROUND INPUT,
+    'ChFlg%=Change Flag)
+     OW$=IW$ : CALL WrCha(L%,C%+W%,1,CHR$(18)) : LOCATE L%,C%,1
+     IF ChFlg%=1 THEN
+     CALL SetCol(L%,C%,L%,C%+W%-1,CFI%,CBI%)
+       WHILE INKEY$ <>"" : WEND
+       MaxWords%=Words%(CW$)
+       IF ((INSTR(IW$,Word$(IW$,WP%))=0) OR (WP%>Words%(IW$))) THEN WP%=1
+      SpinBut0:
+       Ky$=INKEY$
+       IF MID$(Ky$,2,1)="H" GOTO ScrollUp
+       IF MID$(Ky$,2,1)="P" GOTO ScrollDn
+       IF Ky$=CHR$(13) GOTO Continue
+       GOTO SpinBut0
+      ScrollUp:
+       WP%=WP%+1 : IF WP%>MaxWords% THEN WP%=MaxWords%
+       OW$=Word$(CW$,WP%)
+       CALL WrCha(L%,C%,W%,OW$)
+       GOTO SpinBut0
+      ScrollDn:
+       WP%=WP%-1 : IF WP%<1         THEN WP%=1
+       OW$=Word$(CW$,WP%)
+       CALL WrCha(L%,C%,W%,OW$)
+       GOTO SpinBut0
+      Continue:
+     END IF
+     OW$=RIGHT$(SPACE$(W%)+RTRIM$(OW$),W%) : CALL WrCha(L%,C%,W%,OW$)
+     CALL SetCol(L%,C%,L%,C%+W%-1,15,5)
+END SUB
+
+SUB ChkBox(L%,C%,Pin,PO$,CFI%,CBI%,ChFlg%)              'CHECK BOX
+    '(L%=LINE, C%=COLUMN, CFI%=COLOR FOREGROUND INPUT,
+    'CBI%=COLOR BACKGROUND INPUT, ChFlg%=Change Flag)
+     PO$=LTRIM$(STR$(Pin))
+     CALL WrCha(L%,C%+1,1,CHR$(18)) : LOCATE L%,C%,1
+     IF ChFlg%=1 THEN
+     WHILE INKEY$ <>"" : WEND
+      CALL SetCol(L%,C%,L%,C%,CFI%,CBI%)
+      ChkBox0:
+       Ky$=INKEY$
+       IF MID$(Ky$,2,1)="H" GOTO ChkBoxUp
+       IF MID$(Ky$,2,1)="P" GOTO ChkBoxDn
+       IF Ky$=CHR$(13) GOTO ChkBox1
+       GOTO ChkBox0
+      ChkBoxUp:
+         PO$="1"
+         CALL WrCha(L%,C%,1,PO$)
+         GOTO ChkBox0
+      ChkBoxDn:
+         PO$="0"
+         CALL WrCha(L%,C%,1,PO$)
+         GOTO ChkBox0
+      ChkBox1:
+     END IF
+     CALL WrCha(L%,C%,1,PO$)
+     CALL SetCol(L%,C%,L%,C%,15,5)
+END SUB
+
+SUB EntrFld(L%,C%,W%,IW$,OW$,CFI%,CBI%,ChFlg%)  'ENTRY FIELD
+    '(L%=LINE, C%=COLUMN, W%=WIDTH, IW$=INWORD, OW$=OUTWORD,
+    'CFI%=COLOR FOREGROUND INPUT, CBI%=COLOR BACKGROUND INPUT,
+    'ChFlg%=Change Flag)
+     OW$=IW$ : OW$=RIGHT$(SPACE$(W%)+RTRIM$(OW$),W%) : CALL WrCha(L%,C%,W%,OW$) : LOCATE L%,C%,1
+     IF ChFlg%=1 THEN
+      CALL RdCha(L%,C%,W%,OW$,CFI%,CBI%)
+     END IF
+     OW$=RIGHT$(SPACE$(W%)+OW$,W%) : CALL WrCha(L%,C%,W%,OW$)
+     CALL SetCol(L%,C%,L%,C%+W%-1,15,5)
 END SUB
 

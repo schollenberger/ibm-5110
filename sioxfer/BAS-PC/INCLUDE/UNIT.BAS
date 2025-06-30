@@ -1,4 +1,4 @@
-' Unuiversal Functions 03/24/2023
+' Unuiversa'l Functions 03/24/2023
 
 FUNCTION Keys$    PUBLIC
 SHARED KeyLine$
@@ -25,12 +25,12 @@ END FUNCTION
 
 FUNCTION BinHex$(HexDigits%,BinValue$)PUBLIC     '*** Binary to Hex Conversion
   HexValue$=STRING$(HexDigits%,"0")
-  BinValue$=RIGHT$(STRING$(HexDigits%*4,48)+BinValue$,HexDigits%*4)
+  BinaryValue$=RIGHT$(STRING$(HexDigits%*4,48)+BinValue$,HexDigits%*4)
   FOR L%=1 TO LEN(HexValue$) : LB%=(L%-1)*4+1
-    A8%=VAL(MID$(BinValue$,LB%  ,1))*8
-    A4%=VAL(MID$(BinValue$,LB%+1,1))*4
-    A2%=VAL(MID$(BinValue$,LB%+2,1))*2
-    A1%=VAL(MID$(BinValue$,LB%+3,1))
+    A8%=VAL(MID$(BinaryValue$,LB%  ,1))*8
+    A4%=VAL(MID$(BinaryValue$,LB%+1,1))*4
+    A2%=VAL(MID$(BinaryValue$,LB%+2,1))*2
+    A1%=VAL(MID$(BinaryValue$,LB%+3,1))
     MID$(HexValue$,L%,1)=HEX$(A8%+A4%+A2%+A1%)
   NEXT L%
   HexValue$=RIGHT$(HexValue$,HexDigits%)
@@ -39,12 +39,13 @@ END FUNCTION
 
 FUNCTION BinHexL$(HexDigits%,BinValue$)PUBLIC    '*** Binary to Hex Left adjusted
   HexValue$=STRING$(HexDigits%,"0")
-  BinValue$=LEFT$(BinValue$+STRING$(HexDigits%*4,48),HexDigits%*4)
+  BinaryValue$=LEFT$(BinValue$+STRING$(HexDigits%*4,48),HexDigits%*4)
+  PRINT "**",BinaryValue$
   FOR L%=1 TO LEN(HexValue$) : LB%=(L%-1)*4+1
-    A8%=VAL(MID$(BinValue$,LB%  ,1))*8
-    A4%=VAL(MID$(BinValue$,LB%+1,1))*4
-    A2%=VAL(MID$(BinValue$,LB%+2,1))*2
-    A1%=VAL(MID$(BinValue$,LB%+3,1))
+    A8%=VAL(MID$(BinaryValue$,LB%  ,1))*8
+    A4%=VAL(MID$(BinaryValue$,LB%+1,1))*4
+    A2%=VAL(MID$(BinaryValue$,LB%+2,1))*2
+    A1%=VAL(MID$(BinaryValue$,LB%+3,1))
     MID$(HexValue$,L%,1)=HEX$(A8%+A4%+A2%+A1%)
   NEXT L%
   HexValue$=RIGHT$(HexValue$,HexDigits%)
@@ -92,9 +93,10 @@ FUNCTION DoesExist(DoesExistVariable$,DoesExistInput$,Rc) PUBLIC
   Rc=0
   IF DIR$(DoesExistInput$)="" THEN
     Rc=1
-    CALL WrCha(25,1,79,DoesExistVariable$+" ==>"+DoesExistInput$+"<== not found")
-    CALL Enter : CALL ClrBlk(25,1,25,80)
+'    CALL WrCha(25,1,79,DoesExistVariable$+" ==>"+DoesExistInput$+"<== not found")
+'    CALL Enter : CALL ClrBlk(25,1,25,80)
   END IF
+  DoesExist=Rc
 END FUNCTION
 
 FUNCTION Word$(R$,W%)

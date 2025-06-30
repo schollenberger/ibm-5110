@@ -1,4 +1,5 @@
-' USBSIO Functions 03/19/2023
+' USBSIO Functions 2025-06-30 - modified Werner Schollenberger
+'                             - Code conversions inside the basic functions
 
    '****************************************************************************
    '* Subroutines for SIO transfers                                            *
@@ -6,7 +7,7 @@
 IB.DEB:                                          'Debug Routine for SIO
 
    COLOR 15,1 : CLS : GOSUB Header1
-   CALL PrCha(3,24,30,"* IEEE BUS MANUAL OPERATIONS *",14,1)
+   CALL PrCha(3,24,30,"* SIO Port/Bus MANUAL OPERATIONS *",14,1)
    CALL SetCol(25,1,25,80,10,4)
    CALL LiPrt( 4,"E Program end                                        ",15,1)
    CALL LiPrt( 5,"                                                     ",15,1)
@@ -47,7 +48,9 @@ IB.DEB:                                          'Debug Routine for SIO
  Pmenu2:                                         'PUTS (Put String on Bus)
    CALL PrCha(24,1,80,"Data: ",15,1)
    CALL RdCha(24,7,74,Datstr$,15,2) : Datstr$=RTRIM$(Datstr$)
-   CALL PUTS(Datstr$) : RETURN
+'   CALL PUTS(Datstr$)
+   CALL PUTSConv(Datstr$)
+   RETURN
  Pmenu3:                                         'GETS (Get String from Bus)
    CALL PrCha(24,1,80,"Length of Record: ",15,1)
    CALL RdNum(24,19,2,RN,15,2)
@@ -56,7 +59,8 @@ IB.DEB:                                          'Debug Routine for SIO
  Pmenu4:                                         'PUTS + GETS
    CALL PrCha(24,1,80,"Output Data:                Input Data: ",15,1)
    CALL RdCha(24,13,15,Datstr$,15,2)
-   CALL PUTS(Datstr$)
+'   CALL PUTS(Datstr$)
+   CALL PUTSConv(Datstr$)
    Datstr$=GETS$(4)
    CALL PrCha(24,41,40,MID$(Datstr$,1,4),15,1)
    CALL Enter : RETURN
@@ -77,7 +81,8 @@ IB.DEB:                                          'Debug Routine for SIO
    REPLACE "|" WITH CHR$(16) IN Datstr$          'use | for DLE
    SIO.STP$=""
    WHILE SIO.STP$<>CHR$(27)
-    CALL PUTS(Datstr$) : DELAY(RN)
+'    CALL PUTS(Datstr$) : DELAY(RN)
+    CALL PUTSConv(Datstr$) : DELAY(RN)
     SIO.STP$=INKEY$
    WEND
    RETURN
@@ -156,6 +161,12 @@ FUNCTION SHUTDOWN(Port$,Flg%) SHARED
     CLOSE #7
   END IF
 END FUNCTION
+
+FUNCTION PutSConv(DataStr$) SHARED
+  PRINT #5,"** PUTSCONV-<";DataStr$;">"
+  CALL PUTS(Codetrans$(CP437$,T19$,DataStr$,SIO.Cflg%))
+END FUNCTION
+
 
 FUNCTION PutS(InputlineP$) SHARED '*********** PUTS  ( Outputline$ BUSOUT ) ****
   SIO.FCTN$="PUTS"
@@ -268,7 +279,7 @@ PRINT #5,CHR$(j%);
   NEXT i%
    ENDGS:
 PRINT #5,"**GETS-- Received ";LEN(InputlineG$);" Character."
-PRINT #5,"**GETS<-";InputlineG$
+PRINT #5,"**GETS<-";InputlineG$;"->"
 
      IF Ig151E%=1 THEN : REPLACE LFE$     WITH ""        IN InputlineG$
      IF Ig15%  =1 THEN : REPLACE CHR$(21) WITH CHR$(223) IN InputlineG$
@@ -280,7 +291,7 @@ PRINT #5,"**GETS<-";InputlineG$
 '    IF IgS3%  =1 THEN : REPLACE CHR$(??) WITH CHR$(223) IN InputlineG$
 '    IF IgS4%  =1 THEN : REPLACE CHR$(??) WITH CHR$(223) IN InputlineG$
   Outputline$=InputlineG$
-  PRINT #5,"**GETS-- Returning: ";OutputLine$
+  PRINT #5,"**GETS-- Returning: <";OutputLine$;">"
   GetS$=Outputline$
   CALL IbStat(" >")
   RECS=RECS+1
@@ -298,6 +309,30 @@ SUB BufC SHARED '************************** BufferClear ************************
     IF SIO.Tflg%=1 THEN : PRINT #6,"** BUFC-";i%;" Bytes cleared"
   END IF
 END SUB
+
+FUNCTION StringHex$(InpStr$)	PUBLIC                     ' Returns String with HEX repesentation of a string
+  OutpStr$=""
+  FOR i%=1 TO LEN(InpStr$)
+    OutpStr$=OutpStr$+RIGHT$("00"+HEX$(ASCII(MID$(InpStr$,i%,1))),2)
+  NEXT i%
+  StringHex$=OutpStr$
+END FUNCTION
+
+FUNCTION CodeTrans$(Incode$, Outcode$,Instring$,Flg%) SHARED ' *** CodeTranslation
+  Outstring$=""
+  FOR i1%=1 TO LEN(Instring$)
+      index%=INSTR(Outcode$,MID$(Instring$,i1%,1))
+      Outstring$=Outstring$+MID$(Incode$,index%,1)
+  NEXT i1%
+  IF Flg%=1 THEN
+    PRINT #5,"** TranI-";Instring$
+    PRINT #5,"** TIHex-";StringHex(Instring$)
+    PRINT #5,"** TranO-";Outstring$
+    PRINT #5,"** TOHex-";StringHex(Outstring$)
+  END IF
+  CodeTrans$=Outstring$
+END FUNCTION
+
 
 SUB SIOTrac(EFLG$) SHARED '************* TRACE ROUTINE *************************
   LOCAL WC$

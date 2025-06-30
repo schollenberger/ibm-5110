@@ -13,7 +13,9 @@
   GOTO START
 
   $INCLUDE  "D:\TOOLS\BAS\INCLUDE\DISPLAY.BAS"                    'Screen Functions
-  $INCLUDE  "D:\TOOLS\BAS\INCLUDE\UNIT.BAS"                       'Universal Functions
+'  $INCLUDE  "D:\TOOLS\BAS\INCLUDE\UNIT.BAS"                       'Universal Functions
+  $INCLUDE  "..\INCLUDE\UNIT.BAS"                       'Universal Functions
+  $INCLUDE  "CODEGEN.BAS"                               'Code table functions
   $INCLUDE  "USB_SIO.BAS"                               'USB_SIO Functions
 
 START:
@@ -26,6 +28,7 @@ START:
   SIO.Dflg%  = SGN(INSTR(Options$,"/D"))                'Debug (no serial I/O)
   SIO.Tflg%  = SGN(INSTR(Options$,"/T"))                'Trace data in Tra File
   IB.Stat$   = "  "                                     'IB Status
+  CR$        = CHR$(13)                                 'CR  X'0D'
   LF$        = CHR$(10)                                 'LF  X'0A'
   RS1E$      = CHR$(30)                                 'RS  X'1E'
   DLE$       = CHR$(16)                                 'DLE X'10'
@@ -34,38 +37,40 @@ START:
   EOFP$      = CHR$( 4)+CHR$(21)+CHR$(30)+CHR$(31)      'EOT+LF+RS+US X'04151E1F'
   EOFG$      = CHR$( 4)+CHR$(30)+CHR$(31)               'EOT+RS+US X'041E1F'
   Ef%        = 0                                        ' default values
-  Men1%      = 2
+  Men1%      = 2  ' Initial position on first screen
   Error.Cnt% = 0
   Rec.Cnt%   = 0
   Tra%       = 0
   Hex%       = 0
   Pdf%       = 0
+                                                        ' Switches:
+  P1         = 1                                        ' RD  (1=show Data)
+  P2         = 1                                        ' TR  (1=Generate Tracefile)
+  P3         = 0                                        ' SP  (1=spare)
+  P4         = 0                                        ' RS* (1=no signals on RTS)
+  P5         = 0                                        ' ME* (1=Suppress all fails)
+  P6         = 0                                        ' PE* (1=Paritycheck on)
+  P7         = 0                                        ' FE* (1=Suppress defect Byte)
 
-  P1         = 1
-  P2         = 1
-  P3         = 0
-  P4         = 0
-  P5         = 0
-  P6         = 0
-  P7         = 0
-  P11$       = "COM1"   : C11$       = "COM1 COM2 COM3 COM4 COM5 COM6 COM7 COM8"
-  P12$       = "9600"   : C12$       = "75 110 150 300 600 1200 1800 2400 4800 9600 19200 38400 57600 115200 "
-  P13$       = "N"      : C13$       = "N E O S M"
-  P14$       = "8"      : C14$       = "5 6 7 8 H P"
-  P15$       = "256"
-  P16$       = "2"      : C16$       = "1 2"
-  P17$       = "0"      : C17$       = "0 1 2 3 4 5 6 7 8 9 A B C D E F"
-  P18$       = "EBCDIC" : C18$       = "EBCDIC CP5110 CP5100 ASCII CI5110 CI5100"
-  P19$       = "EBCDIC" : C19$       = "EBCDIC CP5110 CP5100 HEX"
+                                                                                    ' Parameters
+  P11$       = "COM2"   : C11$       = "COM1 COM2 COM3 COM4 COM5 COM6 COM7 COM8"    ' PO* Port
+  P12$       = "9600"   : C12$       = "75 110 150 300 600 1200 1800 2400 4800 9600 19200 38400 57600 115200 "  ' BR* Baudrate
+  P13$       = "N"      : C13$       = "N E O S M"                                  ' PA* Parity
+  P14$       = "8"      : C14$       = "5 6 7 8 H P"                                ' BI  Bits
+  P15$       = "256"                                                                ' RL  Max. Recordlength (1-32000)
+  P16$       = "2"      : C16$       = "1 2"                                        ' ST* Stop Bits
+  P17$       = "0"      : C17$       = "0 1 2 3 4 5 6 7 8 9 A B C D E F"            ' IM  Ignore Mode
+  P18$       = "EBCDIC" : C18$       = "EBCDIC CP5110 CP5100 ASCII CI5110 CI5100"   ' CI  Code in (Translation on GET)
+  P19$       = "EBCDIC" : C19$       = "EBCDIC CP5110 CP5100 ASCII HEX"                   ' CO  Code Out (Translation on PUT)
+  P19$       = "ASCII"
 
   P20$       = "99999"
   P21$       = "0"      : C21$       = "0 1 2 3"
   P22$       = ""
 '  P22$       = ",CS60000"
 
-  T18$       = EBCDIC$
-  T19$       = EBCDIC$
-
+  T18$       = ""
+  T19$       = ""
 
   HexChr$    = "0123456789ABCDEF"
   MsgFile$   = PROG$+".msg"
@@ -89,6 +94,35 @@ START:
   OPEN TracFile$ FOR OUTPUT AS#6
   PRINT #6,TracFile$+" started: ";DATE$;" ";TIME$
   ON ERROR GOTO ErrH : KEY OFF : CLS : ON TIMER (60) GOSUB Clock : TIMER ON
+
+  PRINT #5,"Generating code pages..."
+  CALL SetXltASCII
+  CALL SetXltEBCDIC
+  CALL SetXltCP5110
+  CALL SetXltCI5110
+  CALL SetXltCP5100
+  CALL SetXltCI5100
+
+  IF P18$ = "ASCII" THEN
+    T18$=CP437$
+  ELSEIF P18$ = "EBCDIC" THEN
+    T18$=EBCDIC$
+  END IF
+
+  IF P19$ = "ASCII" THEN
+    T19$=CP437$
+  ELSEIF P19$ = "EBCDIC" THEN
+    T19$=EBCDIC$
+  END IF
+
+  CPlocal$=CP437$
+
+  IF  SIO.Dflg% = 1 THEN
+    CALL SetASCFILE
+    CALL Set5110FILE
+  END IF
+
+  PRINT #5,"Using codepages:  Input = ";P18$,"Output: ";P19$
 
   DIM Scn1$(21)
 
@@ -131,14 +165,13 @@ SMenu1:                                                 'MENU 1
   CALL FSInp(Men1%+2,1,"",15,1,15,1,CL%,CC%,3,9,1,80,"OC  MDE",M1%)
 
   IF M1%=0 THEN M1%=INT(CL%-3)
+  IF M1%=0 THEN GOTO SMenu1
 
+  ' Debug
   CALL LiPrt(2,"SIO.M1% = "+STR$(SIO.M1%),14,1)
 
-'  Men2%=3
-
-
   ON M1% GOTO OpenCom,CloseCom,SMenu1,SMenu1,IBManOp,CDOSin,PEnd
-'   GOTO SMenu1
+  GOTO SMenu1
 
 ' StTraF  - set trace file
 

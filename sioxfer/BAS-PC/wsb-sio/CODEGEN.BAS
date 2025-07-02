@@ -1,5 +1,8 @@
+' CODEGEN.BAS - Generate code pages for sioxfer
+'             - 2025-07-01 WSB - made tmp$ variable local  
 
 SUB SetXltASCII SHARED   '*** SetXlt for ASCII  code ***************************
+  LOCAL tmp$
   tmp$=""
   FOR i%=1 TO 256
     tmp$=tmp$+CHR$(i%-1)
@@ -16,6 +19,8 @@ SUB SetXltASCII SHARED   '*** SetXlt for ASCII  code ***************************
 END SUB
 
 SUB SetXltEBCDIC SHARED  '*** SetXlt for EBCDIC code ***************************
+  LOCAL tmp$
+  tmp$=""
   FOR i%=1 TO 256
     tmp$=tmp$+"_"
   NEXT i%
@@ -41,8 +46,9 @@ SUB SetXltEBCDIC SHARED  '*** SetXlt for EBCDIC code ***************************
 ' MID$(tmp$, 18, 1)=CHR$( 17)' DC1  #1
 ' MID$(tmp$, 19, 1)=CHR$( 18)' DC2  #1
 ' MID$(tmp$, 20, 1)=CHR$( 22)' SYN  #1
+  MID$(tmp$, 22, 1)=CHR$( 21)' NL - straight
 ' MID$(tmp$, 30, 1)=CHR$( 29)' GS   #1
-' MID$(tmp$, 31, 1)=CHR$( 30)' RS   #1
+  MID$(tmp$, 31, 1)=CHR$( 30)' EB1 - straight
 ' MID$(tmp$, 32, 1)=CHR$( 31)' US   #1
   MID$(tmp$, 56, 1)=CHR$(  4)' EOT
   MID$(tmp$, 65, 1)=CHR$( 32)' SPA
@@ -56,7 +62,7 @@ SUB SetXltEBCDIC SHARED  '*** SetXlt for EBCDIC code ***************************
     PRINT #5, "-- "
   END IF
   MID$(tmp$,  6, 1)=CHR$(  9)' HT       Not shown in Msg File
-  MID$(tmp$, 22, 1)=CHR$( 15)' NL-CR    Not shown in Msg File
+'  MID$(tmp$, 22, 1)=CHR$( 15)' NL-CR    Not shown in Msg File
   MID$(tmp$, 23, 1)=CHR$(  8)' BS       Not shown in Msg File
   MID$(tmp$, 38, 1)=CHR$( 10)' LF       Not shown in Msg File
   MID$(tmp$, 39, 1)=CHR$( 23)' EOB-ETB  Not shown in Msg File
@@ -64,6 +70,8 @@ SUB SetXltEBCDIC SHARED  '*** SetXlt for EBCDIC code ***************************
 END SUB
 
 SUB SetXltCP5110 SHARED  '*** SetXlt for CP5110 code ***************************
+  LOCAL tmp$
+  tmp$=""
   FOR i%=1 TO 256
     tmp$=tmp$+"_"
   NEXT i%
@@ -112,6 +120,8 @@ SUB SetXltCP5110 SHARED  '*** SetXlt for CP5110 code ***************************
 END SUB
 
 SUB SetXltCI5110 SHARED  '*** SetXlt for CP5110 code ***************************
+  LOCAL tmp$
+  tmp$=""
   FOR i%=1 TO 256
     tmp$=tmp$+"_"
   NEXT i%
@@ -160,6 +170,8 @@ SUB SetXltCI5110 SHARED  '*** SetXlt for CP5110 code ***************************
 END SUB
 
 SUB SetXltCP5100 SHARED  '*** SetXlt for CP5100 code ***************************
+  LOCAL tmp$
+  tmp$=""
   FOR i%=1 TO 256
     tmp$=tmp$+"_"
   NEXT i%
@@ -191,6 +203,8 @@ SUB SetXltCP5100 SHARED  '*** SetXlt for CP5100 code ***************************
 END SUB
 
 SUB SetXltCI5100 SHARED  '*** SetXlt for CP5100 code ***************************
+  LOCAL tmp$
+  tmp$=""
   FOR i%=1 TO 256
     tmp$=tmp$+"_"
   NEXT i%
@@ -246,5 +260,3 @@ SUB Set5110FILE SHARED  '*** SetXlt for Debug code *****************************
     CP5110FILE3$=CP5110FILE2$
     REPLACE EOFG$ WITH "" IN CP5110FILE3$
 END SUB
-
-

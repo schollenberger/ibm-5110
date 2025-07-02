@@ -27,6 +27,8 @@ START:
   SIO.Cflg%  = SGN(INSTR(Options$,"/C"))                'Code Pages in Msg File
   SIO.Dflg%  = SGN(INSTR(Options$,"/D"))                'Debug (no serial I/O)
   SIO.Tflg%  = SGN(INSTR(Options$,"/T"))                'Trace data in Tra File
+  SIO.Tflg%  = 1
+
   IB.Stat$   = "  "                                     'IB Status
   CR$        = CHR$(13)                                 'CR  X'0D'
   LF$        = CHR$(10)                                 'LF  X'0A'
@@ -37,6 +39,8 @@ START:
   EOFP$      = CHR$( 4)+CHR$(21)+CHR$(30)+CHR$(31)      'EOT+LF+RS+US X'04151E1F'
   EOFG$      = CHR$( 4)+CHR$(30)+CHR$(31)               'EOT+RS+US X'041E1F'
   Ef%        = 0                                        ' default values
+  EOLIN$    = ""                                        'Current EOL string on get
+  EOLOUT$   = ""                                        'Current EOL string on put
   Men1%      = 2  ' Initial position on first screen
   Error.Cnt% = 0
   Rec.Cnt%   = 0
@@ -53,7 +57,7 @@ START:
   P7         = 0                                        ' FE* (1=Suppress defect Byte)
 
                                                                                     ' Parameters
-  P11$       = "COM2"   : C11$       = "COM1 COM2 COM3 COM4 COM5 COM6 COM7 COM8"    ' PO* Port
+  P11$       = "COM1"   : C11$       = "COM1 COM2 COM3 COM4 COM5 COM6 COM7 COM8"    ' PO* Port
   P12$       = "9600"   : C12$       = "75 110 150 300 600 1200 1800 2400 4800 9600 19200 38400 57600 115200 "  ' BR* Baudrate
   P13$       = "N"      : C13$       = "N E O S M"                                  ' PA* Parity
   P14$       = "8"      : C14$       = "5 6 7 8 H P"                                ' BI  Bits
@@ -61,16 +65,18 @@ START:
   P16$       = "2"      : C16$       = "1 2"                                        ' ST* Stop Bits
   P17$       = "0"      : C17$       = "0 1 2 3 4 5 6 7 8 9 A B C D E F"            ' IM  Ignore Mode
   P18$       = "EBCDIC" : C18$       = "EBCDIC CP5110 CP5100 ASCII CI5110 CI5100"   ' CI  Code in (Translation on GET)
-  P19$       = "EBCDIC" : C19$       = "EBCDIC CP5110 CP5100 ASCII HEX"                   ' CO  Code Out (Translation on PUT)
+  P19$       = "EBCDIC" : C19$       = "EBCDIC CP5110 CP5100 ASCII HEX"             ' CO  Code Out (Translation on PUT)
   P19$       = "ASCII"
+  'P18$       = "ASCII"
 
   P20$       = "99999"
   P21$       = "0"      : C21$       = "0 1 2 3"
   P22$       = ""
-'  P22$       = ",CS60000"
+  P22$       = ",CS60000"
 
-  T18$       = ""
-  T19$       = ""
+  T18$       = ""                   'code page IN
+  T19$       = ""                   'code page OUT
+  CPlocal$   = ""                   'local code page
 
   HexChr$    = "0123456789ABCDEF"
   MsgFile$   = PROG$+".msg"
@@ -103,19 +109,10 @@ START:
   CALL SetXltCP5100
   CALL SetXltCI5100
 
-  IF P18$ = "ASCII" THEN
-    T18$=CP437$
-  ELSEIF P18$ = "EBCDIC" THEN
-    T18$=EBCDIC$
-  END IF
+  GOSUB CodeSel                 ' assigns configured code pages to T18$, T19$
+                                ' and CPlocal$
 
-  IF P19$ = "ASCII" THEN
-    T19$=CP437$
-  ELSEIF P19$ = "EBCDIC" THEN
-    T19$=EBCDIC$
-  END IF
-
-  CPlocal$=CP437$
+  PRINT #5, "++++ EOLIN and EOLOUT: ";StringHex(EOLIN$); " - ";StringHex$(EOLOUT$)
 
   IF  SIO.Dflg% = 1 THEN
     CALL SetASCFILE
@@ -177,8 +174,8 @@ SMenu1:                                                 'MENU 1
 
 '  PRINT "Hello WORLD"
 
-MANSIO:  
-  GOSUB IB.DEB			' USB_SIO Menu
+MANSIO:
+  GOSUB IB.DEB                  ' USB_SIO Menu
 
   CALL ClrLin(3,23,15,1)
 
@@ -231,10 +228,28 @@ DefSwPa:
 ' Men1%=4
   RETURN
 
+CodeSel:                                    'Select code page called via GOSUB to keep
+                                            'Variables PUBLIC
+  SELECT CASE P18$
+    CASE "EBCDIC" : T18$=EBCDIC$ : EOLIN$=LFE$
+    CASE "ASCII" : T18$=CP437$  : EOLIN$=CR$
+    CASE "CP5110" : T18$=CP5110$ : EOLIN$=LFE$
+    CASE "CP5100" : T18$=CP5100$ : EOLIN$=LFE$
+    CASE "CI5110" : T18$=CI5110$ : EOLIN$=LFE$
+    CASE "CI5100" : T18$=CI5100$ : EOLIN$=LFE$
+  END SELECT
+  SELECT CASE P19$
+    CASE "EBCDIC" : T19$=EBCDIC$ : EOLOUT$=LFE$
+    CASE "ASCII"  : T19$=CP437$  : EOLOUT$=CR$
+    CASE "CP5110" : T19$=CP5110$ : EOLOUT$=LFE$
+    CASE "CP5100" : T19$=CP5100$ : EOLOUT$=LFE$
+  END SELECT
+  CPlocal$=CP437$
+  RETURN
 
 ErrH:                                                   'System Errorhandling
   CALL WrCha(25,1,78,"ERROR "+STR$(ERR))
-  CALL Enter : 
+  CALL Enter :
   CALL ClrBlk(25,1,25,70)
   GOTO ERRFINAL
   RETURN
@@ -306,4 +321,4 @@ PEnd:                                                   'Program - End
   COLOR 7,0,0
 '  CLS
   END
-  
+

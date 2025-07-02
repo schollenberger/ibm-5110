@@ -48,8 +48,10 @@ IB.DEB:                                          'Debug Routine for SIO
  Pmenu2:                                         'PUTS (Put String on Bus)
    CALL PrCha(24,1,80,"Data: ",15,1)
    CALL RdCha(24,7,74,Datstr$,15,2) : Datstr$=RTRIM$(Datstr$)
+
+   PRINT #5,"PMenu2: Datastr$ (Hex): <";StringHex$(Datastr$)+EOLOUT$;">"
 '   CALL PUTS(Datstr$)
-   CALL PUTSConv(Datstr$)
+   CALL PUTSConv(Datstr$+EOLOUT$)
    RETURN
  Pmenu3:                                         'GETS (Get String from Bus)
    CALL PrCha(24,1,80,"Length of Record: ",15,1)
@@ -81,9 +83,9 @@ IB.DEB:                                          'Debug Routine for SIO
    REPLACE "|" WITH CHR$(16) IN Datstr$          'use | for DLE
    SIO.STP$=""
    WHILE SIO.STP$<>CHR$(27)
-'    CALL PUTS(Datstr$) : DELAY(RN)
-    CALL PUTSConv(Datstr$) : DELAY(RN)
-    SIO.STP$=INKEY$
+'     CALL PUTS(Datstr$) : DELAY(RN)
+     CALL PUTSConv(Datstr$+EOLOUT$) : DELAY(RN)
+     SIO.STP$=INKEY$
    WEND
    RETURN
 
@@ -103,7 +105,8 @@ IB.DEB:                                          'Debug Routine for SIO
    CALL RdCha(24,13,15,DatstrO$,15,2)
    SIO.STP$=""
    WHILE SIO.STP$<>CHR$(27)
-    CALL PUTS(DatstrO$) : DELAY(RN)
+'    CALL PUTS(DatstrO$) : DELAY(RN)
+    CALL PUTSConv(DatstrO$+EOLOUT$)
     Datstr$=GETS$(4)
     CALL PrCha(24,41,4,MID$(Datstr$,1,4),15,1)
     SIO.STP$=SIO.BRK$
@@ -163,16 +166,19 @@ FUNCTION SHUTDOWN(Port$,Flg%) SHARED
 END FUNCTION
 
 FUNCTION PutSConv(DataStr$) SHARED
-  PRINT #5,"** PUTSCONV-<";DataStr$;">"
-  CALL PUTS(Codetrans$(CP437$,T19$,DataStr$,SIO.Cflg%))
+  LOCAL ConvStr$
+  PRINT #5,"** PUTSCONV--input:     ";StringHex(DataStr$);
+  ConvStr$=Codetrans$(CPLocal$,T19$,DataStr$,SIO.Tflg%)
+  PRINT #5,"** PUTSCONV-- converted: "StringHex(ConvStr$)
+  CALL PUTS(ConvStr$)
+'  CALL PUTS(Codetrans$(CPlocal$,T19$,DataStr$,SIO.Cflg%))
 END FUNCTION
-
 
 FUNCTION PutS(InputlineP$) SHARED '*********** PUTS  ( Outputline$ BUSOUT ) ****
   SIO.FCTN$="PUTS"
   CALL IbStat(">>")
-  REPLACE CHR$(10) WITH "" IN InputlineP$
-  REPLACE CHR$(13) WITH "" IN InputlineP$
+  'REPLACE CHR$(10) WITH "" IN InputlineP$
+  'REPLACE CHR$(13) WITH "" IN InputlineP$
   REPLACE CHR$(26) WITH CHR$(223) IN InputlineP$  ' x'1A' does close files!
   CharIndex%=1
   Buf$="   "
@@ -180,7 +186,7 @@ FUNCTION PutS(InputlineP$) SHARED '*********** PUTS  ( Outputline$ BUSOUT ) ****
   PRINT #5,"** PUTS->" ;InputlineP$
 
   IF SIO.Dflg=0 THEN
-    PRINT #7, InputlineP$
+    PRINT #7, InputlineP$;
     PRINT #5,"** PUTS-- Send completed"
   END IF
   IF P1=1 THEN
@@ -203,47 +209,42 @@ FUNCTION GetS$(LRec) SHARED '************** GETS  ( BUSIN Datstr$ ) ************
     GOTO ENDGS
   END IF
   InputlineG$=""
-  FOR i%=1 TO LRec : IRun%=0
+  Buf$=""
+  PRINT #5, "EOLIN$ (hex)= ";StringHex$(EOLIN$)
+  FOR i%=1 TO LRec
+    IRun%=0
     IF SIO.Dflg%=1 THEN
-'PRINT #5,"** GETS -- ";LEN(ASCFILE1$),LEN(ASCFILE2$),LEN(ASCFILE3$)
+      'PRINT #5,"** GETS -- ";LEN(ASCFILE1$),LEN(ASCFILE2$),LEN(ASCFILE3$)
       IF P21$="0" THEN
         IByte$="9"
-        GOTO GET0
       ELSEIF P21$="1" THEN
         IByte$=MID$(ASCFILE1$,CharIndex%,1) : CharIndex%=CharIndex%+1
         IF CharIndex%>LEN(ASCFILE1$) THEN : CharIndex%=1
-        GOTO GET0
       ELSEIF P21$="2" THEN
         IByte$=MID$(ASCFILE2$,CharIndex%,1) : CharIndex%=CharIndex%+1
         IF CharIndex%>LEN(ASCFILE2$) THEN : CharIndex%=1
-        GOTO GET0
       ELSEIF P21$="3" THEN
         IByte$=MID$(ASCFILE3$,CharIndex%,1) : CharIndex%=CharIndex%+1
         IF CharIndex%>LEN(ASCFILE3$) THEN : CharIndex%=1
-        GOTO GET0
       ELSEIF P21$="4" THEN
         IByte$=MID$(CP5110FILE1$,CharIndex%,1) : CharIndex%=CharIndex%+1
         IF CharIndex%>LEN(CP5110FILE1$) THEN : CharIndex%=1
-        GOTO GET0
       ELSEIF P21$="5" THEN
         IByte$=MID$(CP5110FILE2$,CharIndex%,1) : CharIndex%=CharIndex%+1
         IF CharIndex%>LEN(CP5110FILE2$) THEN : CharIndex%=1
-        GOTO GET0
       ELSEIF P21$="6" THEN
         IByte$=MID$(CP5110FILE3$,CharIndex%,1) : CharIndex%=CharIndex%+1
         IF CharIndex%>LEN(CP5110FILE3$) THEN : CharIndex%=1
-        GOTO GET0
       END IF
     ELSE
       IByte$=INPUT$(1,#7)
       PRINT #5,"** GETS <= ";IByte$
     END IF
-    GET0:
-      Buf$=RIGHT$(Buf$,2)+IByte$
+    Buf$=RIGHT$(Buf$,2)+IByte$
     IF Tra%=1 THEN
       InputlineG$=InputlineG$+IByte$
-      IF RIGHT$(Buf$,2)=LFE$ THEN
-        REPLACE LFE$ WITH "" IN InputlineG$
+      IF RIGHT$(Buf$,2)=EOLIN$ THEN
+        REPLACE EOLIN$ WITH "" IN InputlineG$
         GOTO ENDGS
       ELSEIF Buf$=EOFG$ THEN
         REPLACE EOFG$ WITH "" IN InputlineG$
@@ -264,10 +265,10 @@ FUNCTION GetS$(LRec) SHARED '************** GETS  ( BUSIN Datstr$ ) ************
     ELSEIF Pdf%=1 THEN
       InputlineG$=InputlineG$+IByte$
       FOR j%= 0 to 32
-PRINT #5,CHR$(j%);
+        PRINT #5,CHR$(j%);
         REPLACE CHR$(j%) WITH CHR$(250) IN InputlineG$
       NEXT j%
-PRINT #5,CHR$(j%);
+      PRINT #5,CHR$(j%);
       IF Buf$=EOFG$ THEN
         REPLACE EOFG$ WITH "" IN Buf$
         Ef%=1
@@ -275,11 +276,11 @@ PRINT #5,CHR$(j%);
       END IF
       GOTO GETBS
     END IF
-   GETBS:
+    GETBS:
   NEXT i%
-   ENDGS:
-PRINT #5,"**GETS-- Received ";LEN(InputlineG$);" Character."
-PRINT #5,"**GETS<-";InputlineG$;"->"
+  ENDGS:
+  PRINT #5,"**GETS-- Received ";LEN(InputlineG$);" Character."
+  PRINT #5,"**GETS<-";InputlineG$;"->"
 
      IF Ig151E%=1 THEN : REPLACE LFE$     WITH ""        IN InputlineG$
      IF Ig15%  =1 THEN : REPLACE CHR$(21) WITH CHR$(223) IN InputlineG$
@@ -319,10 +320,14 @@ FUNCTION StringHex$(InpStr$)	PUBLIC                     ' Returns String with HE
 END FUNCTION
 
 FUNCTION CodeTrans$(Incode$, Outcode$,Instring$,Flg%) SHARED ' *** CodeTranslation
+  LOCAL Outstring$, index%, ichar$
   Outstring$=""
   FOR i1%=1 TO LEN(Instring$)
-      index%=INSTR(Outcode$,MID$(Instring$,i1%,1))
-      Outstring$=Outstring$+MID$(Incode$,index%,1)
+    ichar$=MID$(Instring$,i1%,1)
+    index%=INSTR(Outcode$,ichar$)
+    IF index%=0 THEN index%=1 : PRINT #5, "CODETRANS -- Char 0x";StringHex$(ichar$);" not found!! - Index set to 1"
+'     index%=INSTR(Outcode$,MID$(Instring$,i1%,1))
+    Outstring$=Outstring$+MID$(Incode$,index%,1)
   NEXT i1%
   IF Flg%=1 THEN
     PRINT #5,"** TranI-";Instring$

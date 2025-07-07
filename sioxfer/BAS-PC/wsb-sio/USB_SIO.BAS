@@ -4,6 +4,14 @@
    '****************************************************************************
    '* Subroutines for SIO transfers                                            *
    '****************************************************************************
+
+''SUB SIO.MANOPS STATIC
+''  PRINT #5, "** Entering SIO.MANOPS
+''  PRINT #5, "**   EOLIN and EOLOUT: ";StringHex(EOLIN$); " - ";StringHex$(EOLOUT$)
+''  GOSUB IB.DEB
+''  PRINT #5, "** Leaving SIO.MANOPS
+''  EXIT SUB
+
 IB.DEB:                                          'Debug Routine for SIO
 
    COLOR 15,1 : CLS : GOSUB Header1
@@ -48,22 +56,27 @@ IB.DEB:                                          'Debug Routine for SIO
  Pmenu2:                                         'PUTS (Put String on Bus)
    CALL PrCha(24,1,80,"Data: ",15,1)
    CALL RdCha(24,7,74,Datstr$,15,2) : Datstr$=RTRIM$(Datstr$)
-
-   PRINT #5,"PMenu2: Datastr$ (Hex): <";StringHex$(Datastr$)+EOLOUT$;">"
+   PRINT #5,"PMenu2: Sending Datstr$ (Hex): <";StringHex$(Datstr$+EOLOUT$);">"
 '   CALL PUTS(Datstr$)
    CALL PUTSConv(Datstr$+EOLOUT$)
    RETURN
  Pmenu3:                                         'GETS (Get String from Bus)
    CALL PrCha(24,1,80,"Length of Record: ",15,1)
    CALL RdNum(24,19,2,RN,15,2)
-   Datstr$ = GETS$(INT(RN))
-   CALL PrCha(24,1,80,Datstr$,15,1) : CALL Enter : RETURN
+'   Datstr$ = GETS$(INT(RN))
+   Datstr$ = GETSConv$(INT(RN))
+   CALL PrCha(24,1,80,Datstr$,15,1)
+   PRINT #5,"PMenu3: Got Datstr$ (Hex): <";StringHex$(Datstr$);">"
+
+   CALL Enter
+   RETURN
  Pmenu4:                                         'PUTS + GETS
    CALL PrCha(24,1,80,"Output Data:                Input Data: ",15,1)
    CALL RdCha(24,13,15,Datstr$,15,2)
 '   CALL PUTS(Datstr$)
    CALL PUTSConv(Datstr$)
-   Datstr$=GETS$(4)
+'   Datstr$=GETS$(4)
+   Datstr$=GETSConv$(4)
    CALL PrCha(24,41,40,MID$(Datstr$,1,4),15,1)
    CALL Enter : RETURN
  Pmenu5:                                         'GETR (Get String from Bus)
@@ -71,7 +84,9 @@ IB.DEB:                                          'Debug Routine for SIO
    CALL RdNum(24,18,6,RN,15,2)
    SIO.BRK$=""
    WHILE SIO.BRK$<>CHR$(27)
-     A$ = GETS$(4) : CALL WrCha(22,1,60,A$) : DELAY(RN)
+'     A$ = GETS$(4)
+     A$ = GETSConv$(10)
+     CALL WrCha(22,1,60,A$) : DELAY(RN)
      SIO.BRK$=INKEY$
    WEND
    RETURN
@@ -147,6 +162,10 @@ IB.DEB:                                          'Debug Routine for SIO
    WEND
    RETURN
 
+''END SUB
+
+'*** USB_SIO Functions ***
+
 FUNCTION INIT(Port$,Baud$,Parity$,Bits$,Recl$,SBits$,SioOptions$,Flg%) SHARED
   Comparm$=Port$+":"+LTRIM$(Baud$)+","+Parity$+","+LTRIM$(Bits$)+","+LTRIM$(SBits$)+SioOptions$
 ' Comparm$=CHR$(34)+Port$+":"+LTRIM$(STR$(Baud))+","+Parity$+","+LTRIM$(STR$(Bits))+","+LTRIM$(STR$(SBits))+SioOptions$+CHR$(34)
@@ -198,6 +217,18 @@ FUNCTION PutS(InputlineP$) SHARED '*********** PUTS  ( Outputline$ BUSOUT ) ****
   CALL PrCha(25,71,6,RIGHT$("     "+STR$(RECS),6),15,4)
 END FUNCTION
 
+FUNCTION GetSConv$(LRec) SHARED 'Calls Gets$() and returns converted string
+  LOCAL InpStr$, ConvStr$
+  PRINT #5,"** GETSCONV--reading    ";LREC;" Characters"
+  InpStr$ = GETS$(LRec)
+  PRINT #5,"** GETSCONV--Read       <";InpStr$;">"
+  PRINT #5,"** GETSCONV--Read (Hex) <";StringHex(InpStr$);">"
+  ConvStr$=Codetrans$(T18$,CPLocal$,InpStr$,SIO.Tflg%)
+  PRINT #5,"** GETSCONV--Converted: <";ConvStr$;">"
+  GetSConv$ = ConvStr$
+End FUNCTION
+
+
 FUNCTION GetS$(LRec) SHARED '************** GETS  ( BUSIN Datstr$ ) ************
   LOCAL i%, j%, InputlineG$, IByte$
   SIO.FCTN$="GETS"
@@ -210,11 +241,13 @@ FUNCTION GetS$(LRec) SHARED '************** GETS  ( BUSIN Datstr$ ) ************
   END IF
   InputlineG$=""
   Buf$=""
-  PRINT #5, "EOLIN$ (hex)= ";StringHex$(EOLIN$)
+
+  PRINT #5, "** GETS$ -- EOLIN$ (hex)= ";StringHex$(EOLIN$);"   Flag Tra% = ";Tra%
+
   FOR i%=1 TO LRec
     IRun%=0
     IF SIO.Dflg%=1 THEN
-      'PRINT #5,"** GETS -- ";LEN(ASCFILE1$),LEN(ASCFILE2$),LEN(ASCFILE3$)
+      'PRINT #5,"** GETS (Sio.Debug) -- ASCFILEx$ Len = " ;LEN(ASCFILE1$),LEN(ASCFILE2$),LEN(ASCFILE3$)
       IF P21$="0" THEN
         IByte$="9"
       ELSEIF P21$="1" THEN
@@ -243,10 +276,13 @@ FUNCTION GetS$(LRec) SHARED '************** GETS  ( BUSIN Datstr$ ) ************
     Buf$=RIGHT$(Buf$,2)+IByte$
     IF Tra%=1 THEN
       InputlineG$=InputlineG$+IByte$
-      IF RIGHT$(Buf$,2)=EOLIN$ THEN
+      PRINT #5, "** GETS (Tra) -- Content Buf$=";StringHex$(Buf$) 
+      IF RIGHT$(Buf$,LEN(EOLIN$))=EOLIN$ THEN
+        PRINT #5, "** GETS (Tra) -- Found EOL, removing it from input"
         REPLACE EOLIN$ WITH "" IN InputlineG$
         GOTO ENDGS
       ELSEIF Buf$=EOFG$ THEN
+        PRINT #5, "** GETS (Tra) -- Found EOFG, removing it from input"
         REPLACE EOFG$ WITH "" IN InputlineG$
         Ef%=1
         GOTO ENDGS
@@ -297,6 +333,7 @@ FUNCTION GetS$(LRec) SHARED '************** GETS  ( BUSIN Datstr$ ) ************
   CALL IbStat(" >")
   RECS=RECS+1
   CALL PrCha(25,71,6,RIGHT$("     "+STR$(RECS),6),15,4)
+  PRINT #5,"**GETS-- end"  
 END FUNCTION
 
 SUB BufC SHARED '************************** BufferClear ************************
@@ -318,6 +355,17 @@ FUNCTION StringHex$(InpStr$)	PUBLIC                     ' Returns String with HE
   NEXT i%
   StringHex$=OutpStr$
 END FUNCTION
+
+
+FUNCTION AString2Hex$(Instring$) PUBLIC                    'Returns a string containing the HEX-ASCII representation
+                                                           '    the parameter string, separated with blanks     res$=HEX$(ASC(MID$(Instring$,1,1)))
+  FOR i1%=2 TO LEN(Instring$)
+    char1$=MID$(Instring$,i1%,1)
+    res$=res$+" "+HEX$(ASC(char1$))
+  NEXT i1%
+  AString2Hex$=res$
+END FUNCTION
+
 
 FUNCTION CodeTrans$(Incode$, Outcode$,Instring$,Flg%) SHARED ' *** CodeTranslation
   LOCAL Outstring$, index%, ichar$

@@ -1,19 +1,27 @@
   $COMPILE EXE                                          'Compiler statements
   $CPU 80386
-  $COM 32000
+  ''$COM 32000
   $LIB COM+
-  $LIB LPT ON
+  ''$LIB LPT ON
   $OPTION CNTLBREAK ON
   $OPTION AUTODIM OFF
   $STACK 3000
   $STATIC
 
-' Test USBSIO functions
+'*******************************************************************
+'*                                                                 *
+'* Test USB_SIO functions                                          *
+'* Manual Interface to talk with the IBM 5110 via the serial line  *
+'*                                                                 *
+'* June 2025 W. Schollenberger                                                                 *
+'*******************************************************************
 
   GOTO START
+'  GOTO MANSIO
 
-  $INCLUDE  "D:\TOOLS\BAS\INCLUDE\DISPLAY.BAS"                    'Screen Functions
+'  $INCLUDE  "D:\TOOLS\BAS\INCLUDE\DISPLAY.BAS"                    'Screen Functions
 '  $INCLUDE  "D:\TOOLS\BAS\INCLUDE\UNIT.BAS"                       'Universal Functions
+  $INCLUDE  "..\INCLUDE\DISPLAY.BAS"                    'Screen Functions
   $INCLUDE  "..\INCLUDE\UNIT.BAS"                       'Universal Functions
   $INCLUDE  "CODEGEN.BAS"                               'Code table functions
   $INCLUDE  "USB_SIO.BAS"                               'USB_SIO Functions
@@ -66,8 +74,8 @@ START:
   P17$       = "0"      : C17$       = "0 1 2 3 4 5 6 7 8 9 A B C D E F"            ' IM  Ignore Mode
   P18$       = "EBCDIC" : C18$       = "EBCDIC CP5110 CP5100 ASCII CI5110 CI5100"   ' CI  Code in (Translation on GET)
   P19$       = "EBCDIC" : C19$       = "EBCDIC CP5110 CP5100 ASCII HEX"             ' CO  Code Out (Translation on PUT)
-  P19$       = "ASCII"
-  'P18$       = "ASCII"
+'  P19$       = "ASCII"
+'  P18$       = "ASCII"
 
   P20$       = "99999"
   P21$       = "0"      : C21$       = "0 1 2 3"
@@ -151,6 +159,7 @@ START:
   Scn1$(21)="                                              OP* CS,DS,CD,DT Options"
 
 '  GOTO MANSIO
+
 SMenu1:                                                 'MENU 1
   COLOR 15,1 : GOSUB Header1 : GOSUB Header2
   CALL ClrLin(3,24,15,1)
@@ -176,7 +185,7 @@ SMenu1:                                                 'MENU 1
 
 MANSIO:
   GOSUB IB.DEB                  ' USB_SIO Menu
-
+'  CALL SIO.MANOPS
   CALL ClrLin(3,23,15,1)
 
   PRINT "That's all..."
@@ -311,6 +320,7 @@ CDOSin:                                                 'DOS Prompt
 
 IBManOp:
   GOSUB IB.DEB
+  'CALL SIO.MANOPS
   GOTO SMenu1
 
 PEnd:                                                   'Program - End

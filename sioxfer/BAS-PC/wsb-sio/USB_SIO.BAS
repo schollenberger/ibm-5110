@@ -85,7 +85,7 @@ IB.DEB:                                          'Debug Routine for SIO
    SIO.BRK$=""
    WHILE SIO.BRK$<>CHR$(27)
 '     A$ = GETS$(4)
-     A$ = GETSConv$(10)
+     A$ = GETSConv$(20)
      CALL WrCha(22,1,60,A$) : DELAY(RN)
      SIO.BRK$=INKEY$
    WEND
@@ -175,6 +175,8 @@ FUNCTION INIT(Port$,Baud$,Parity$,Bits$,Recl$,SBits$,SioOptions$,Flg%) SHARED
     CLOSE #7
     OPEN Comparm$ AS #7 LEN=32000
   END IF
+  PRINT #5,"DONE ";CHR$(34);Port$;CHR$(34);
+
 END FUNCTION
 
 FUNCTION SHUTDOWN(Port$,Flg%) SHARED
@@ -270,8 +272,10 @@ FUNCTION GetS$(LRec) SHARED '************** GETS  ( BUSIN Datstr$ ) ************
         IF CharIndex%>LEN(CP5110FILE3$) THEN : CharIndex%=1
       END IF
     ELSE
+      GETFF:
       IByte$=INPUT$(1,#7)
-      PRINT #5,"** GETS <= ";IByte$
+      IF IByte$=CHR$(255) GOTO GETFF
+      PRINT #5,"** GETS <= ";IByte$;"  Hex: ";StringHex$(IByte$)
     END IF
     Buf$=RIGHT$(Buf$,2)+IByte$
     IF Tra%=1 THEN

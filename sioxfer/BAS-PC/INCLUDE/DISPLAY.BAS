@@ -5,6 +5,7 @@
 '*                                                                             *
 '* Date       Changed by Reason                                                *
 '* 03/30/2023 H.Ruffner  Add SpinBut, ChkBox, EntrFld function                 *
+'* 07/08/2025 W. Schollenberger  Empty input buffer on SUB Enter               *
 '*                                                                             *
 '*                                                                             *
 '*******************************************************************************
@@ -155,6 +156,7 @@ Enter1:
      DELAY(0.2)
      i$ = INKEY$   
      IF i$<>CHR$(13) GOTO Enter1 ELSE
+     PRINT #5,"Continue..."
 END SUB
 
 SUB UsDelay(t)                                'Us Delay

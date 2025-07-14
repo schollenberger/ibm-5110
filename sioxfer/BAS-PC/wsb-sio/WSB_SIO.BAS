@@ -296,10 +296,11 @@ OpenCom:                                                'Open Com port
   ELSE
     Bits$=P14$
   END IF
+  CALL IbStat("??")
   SioOptions$= LTRIM$(RS$+P22$+PE$+ME$+FE$)
   CALL INIT(P11$,P12$,P13$,Bits$,P15$,P16$,SioOptions$,SIO.Dflg%)
   CALL IbStat("..")
-  PRINT #6,"SIOXFER OPEN: ";DATE$;" ";TIME$
+  PRINT #6,PROG$;" OPEN: ";DATE$;" ";TIME$
   Men1%=6
   GOTO SMenu1
 

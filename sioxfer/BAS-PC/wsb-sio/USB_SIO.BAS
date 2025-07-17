@@ -7,7 +7,7 @@
 
 ''SUB SIO.MANOPS STATIC
 ''  PRINT #5, "** Entering SIO.MANOPS
-''  PRINT #5, "**   EOLIN and EOLOUT: ";StringHex(EOLIN$); " - ";StringHex$(EOLOUT$)
+''  PRINT #5, "** EOLIN and EOLOUT: ";StringHex(EOLIN$); " - ";StringHex$(EOLOUT$)
 ''  GOSUB IB.DEB
 ''  PRINT #5, "** Leaving SIO.MANOPS
 ''  EXIT SUB
@@ -56,9 +56,10 @@ IB.DEB:                                          'Debug Routine for SIO
  Pmenu2:                                         'PUTS (Put String on Bus)
    CALL PrCha(24,1,80,"Data: ",15,1)
    CALL RdCha(24,7,74,Datstr$,15,2) : Datstr$=RTRIM$(Datstr$)
-   PRINT #5,"PMenu2: Sending Datstr$ (Hex): <";StringHex$(Datstr$+EOLOUT$);">"
+   PRINT #5,"PMenu2: Sending Datstr$ (Hex): <";StringHex$(Datstr$);"> followed by <";StringHex$(EOLOUT$);">"
 '   CALL PUTS(Datstr$)
-   CALL PUTSConv(Datstr$+EOLOUT$)
+   CALL PUTSConv(Datstr$)   'Don't convert the EOL characters
+   CALL PUTS(EOLOUT$)
    RETURN
  Pmenu3:                                         'GETS (Get String from Bus)
    CALL PrCha(24,1,80,"Length of Record: ",15,1)
@@ -67,7 +68,6 @@ IB.DEB:                                          'Debug Routine for SIO
    Datstr$ = GETSConv$(INT(RN))
    CALL PrCha(24,1,80,Datstr$,15,1)
    PRINT #5,"PMenu3: Got Datstr$ (Hex): <";StringHex$(Datstr$);">"
-
    CALL Enter
    RETURN
  Pmenu4:                                         'PUTS + GETS
@@ -175,7 +175,7 @@ FUNCTION INIT(Port$,Baud$,Parity$,Bits$,Recl$,SBits$,SioOptions$,Flg%) SHARED
     CLOSE #7
     OPEN Comparm$ AS #7 LEN=32000
   END IF
-  PRINT #5,"DONE ";CHR$(34);Port$;CHR$(34);
+  PRINT #5,"...DONE OPEN ";CHR$(34);Port$;CHR$(34)
 
 END FUNCTION
 
@@ -188,27 +188,27 @@ END FUNCTION
 
 FUNCTION PutSConv(DataStr$) SHARED
   LOCAL ConvStr$
-  PRINT #5,"** PUTSCONV--input:     ";StringHex(DataStr$);
+  PRINT #5,"** PUTSCONV--input:     ";StringHex(DataStr$)
   ConvStr$=Codetrans$(CPLocal$,T19$,DataStr$,SIO.Tflg%)
-  PRINT #5,"** PUTSCONV-- converted: "StringHex(ConvStr$)
+  PRINT #5,"** PUTSCONV--converted: "StringHex(ConvStr$)
   CALL PUTS(ConvStr$)
-'  CALL PUTS(Codetrans$(CPlocal$,T19$,DataStr$,SIO.Cflg%))
+  ' CALL PUTS(Codetrans$(CPlocal$,T19$,DataStr$,SIO.Cflg%))
 END FUNCTION
 
 FUNCTION PutS(InputlineP$) SHARED '*********** PUTS  ( Outputline$ BUSOUT ) ****
   SIO.FCTN$="PUTS"
   CALL IbStat(">>")
-  'REPLACE CHR$(10) WITH "" IN InputlineP$
-  'REPLACE CHR$(13) WITH "" IN InputlineP$
+  ' REPLACE CHR$(10) WITH "" IN InputlineP$
+  ' REPLACE CHR$(13) WITH "" IN InputlineP$
   REPLACE CHR$(26) WITH CHR$(223) IN InputlineP$  ' x'1A' does close files!
   CharIndex%=1
   Buf$="   "
-  PRINT #5,"** PUTS-- SIO-Debug =";SIO.Dflg%
+  PRINT #5,"** PUTS--SIO-Debug =";SIO.Dflg%
   PRINT #5,"** PUTS->" ;InputlineP$
 
   IF SIO.Dflg=0 THEN
     PRINT #7, InputlineP$;
-    PRINT #5,"** PUTS-- Send completed"
+    PRINT #5,"** PUTS--Send completed"
   END IF
   IF P1=1 THEN
     CALL Info("** PUTS-"+InputlineP$,2,0)
@@ -244,12 +244,12 @@ FUNCTION GetS$(LRec) SHARED '************** GETS  ( BUSIN Datstr$ ) ************
   InputlineG$=""
   Buf$=""
 
-  PRINT #5, "** GETS$ -- EOLIN$ (hex)= ";StringHex$(EOLIN$);"   Flag Tra% = ";Tra%
+  PRINT #5, "** GETS$--EOLIN$ (hex)= ";StringHex$(EOLIN$);" EOBUFIN$ (hex)= ";StringHex$(EOBUFIN$);"   Flag Tra% = ";Tra%
 
   FOR i%=1 TO LRec
     IRun%=0
     IF SIO.Dflg%=1 THEN
-      'PRINT #5,"** GETS (Sio.Debug) -- ASCFILEx$ Len = " ;LEN(ASCFILE1$),LEN(ASCFILE2$),LEN(ASCFILE3$)
+      'PRINT #5,"** GETS$(Sio.Debug)--ASCFILEx$ Len = " ;LEN(ASCFILE1$),LEN(ASCFILE2$),LEN(ASCFILE3$)
       IF P21$="0" THEN
         IByte$="9"
       ELSEIF P21$="1" THEN
@@ -259,7 +259,7 @@ FUNCTION GetS$(LRec) SHARED '************** GETS  ( BUSIN Datstr$ ) ************
         IByte$=MID$(ASCFILE2$,CharIndex%,1) : CharIndex%=CharIndex%+1
         IF CharIndex%>LEN(ASCFILE2$) THEN : CharIndex%=1
       ELSEIF P21$="3" THEN
-        IByte$=MID$(ASCFILE3$,CharIndex%,1) : CharIndex%=CharIndex%+1
+         IByte$=MID$(ASCFILE3$,CharIndex%,1) : CharIndex%=CharIndex%+1
         IF CharIndex%>LEN(ASCFILE3$) THEN : CharIndex%=1
       ELSEIF P21$="4" THEN
         IByte$=MID$(CP5110FILE1$,CharIndex%,1) : CharIndex%=CharIndex%+1
@@ -275,18 +275,22 @@ FUNCTION GetS$(LRec) SHARED '************** GETS  ( BUSIN Datstr$ ) ************
       GETFF:
       IByte$=INPUT$(1,#7)
       IF IByte$=CHR$(255) GOTO GETFF
-      PRINT #5,"** GETS <= ";IByte$;"  Hex: ";StringHex$(IByte$)
+      PRINT #5,"** GETS$<= ";IByte$;"  Hex: ";StringHex$(IByte$)
     END IF
     Buf$=RIGHT$(Buf$,2)+IByte$
     IF Tra%=1 THEN
       InputlineG$=InputlineG$+IByte$
-      PRINT #5, "** GETS (Tra) -- Content Buf$=";StringHex$(Buf$) 
+      PRINT #5, "** GETS$(Tra)--Content Buf$=";StringHex$(Buf$)
       IF RIGHT$(Buf$,LEN(EOLIN$))=EOLIN$ THEN
-        PRINT #5, "** GETS (Tra) -- Found EOL, removing it from input"
+        PRINT #5, "** GETS$(Tra)--Found EOL, removing it from input and finish"
         REPLACE EOLIN$ WITH "" IN InputlineG$
         GOTO ENDGS
+      ELSEIF  RIGHT$(Buf$,LEN(EOBUFIN$))=EOBUFIN$ THEN
+        PRINT #5, "** GETS$(Tra)--Found END OF BUFFER, removing it from input and continue"
+        REPLACE EOBUFIN$ WITH "" IN InputlineG$
+        ' GOTO ENDGS
       ELSEIF Buf$=EOFG$ THEN
-        PRINT #5, "** GETS (Tra) -- Found EOFG, removing it from input"
+        PRINT #5, "** GETS$(Tra)--Found EOFG, removing it from input and finish"
         REPLACE EOFG$ WITH "" IN InputlineG$
         Ef%=1
         GOTO ENDGS
@@ -319,25 +323,25 @@ FUNCTION GetS$(LRec) SHARED '************** GETS  ( BUSIN Datstr$ ) ************
     GETBS:
   NEXT i%
   ENDGS:
-  PRINT #5,"**GETS-- Received ";LEN(InputlineG$);" Character."
-  PRINT #5,"**GETS<-";InputlineG$;"->"
-
+  PRINT #5,"** GETS$--Received ";LEN(InputlineG$);" Character."
+  PRINT #5,"** GETS$--Data: <-";InputlineG$;"->"
+  ' Ingore char section - controlled by Ignore Mode (IM) parameter P17$'
      IF Ig151E%=1 THEN : REPLACE LFE$     WITH ""        IN InputlineG$
      IF Ig15%  =1 THEN : REPLACE CHR$(21) WITH CHR$(223) IN InputlineG$
      IF Ig04%  =1 THEN : REPLACE CHR$( 4) WITH CHR$(223) IN InputlineG$
      IF Ig05%  =1 THEN : REPLACE CHR$( 5) WITH CHR$(223) IN InputlineG$
      IF Ig1A%  =1 THEN : REPLACE CHR$(26) WITH CHR$(223) IN InputlineG$
-'    IF IgS1%  =1 THEN : REPLACE CHR$(??) WITH CHR$(223) IN InputlineG$
-'    IF IgS2%  =1 THEN : REPLACE CHR$(??) WITH CHR$(223) IN InputlineG$
-'    IF IgS3%  =1 THEN : REPLACE CHR$(??) WITH CHR$(223) IN InputlineG$
-'    IF IgS4%  =1 THEN : REPLACE CHR$(??) WITH CHR$(223) IN InputlineG$
+    ' IF IgS1%  =1 THEN : REPLACE CHR$(??) WITH CHR$(223) IN InputlineG$
+    ' IF IgS2%  =1 THEN : REPLACE CHR$(??) WITH CHR$(223) IN InputlineG$
+    ' IF IgS3%  =1 THEN : REPLACE CHR$(??) WITH CHR$(223) IN InputlineG$
+    ' IF IgS4%  =1 THEN : REPLACE CHR$(??) WITH CHR$(223) IN InputlineG$
   Outputline$=InputlineG$
-  PRINT #5,"**GETS-- Returning: <";OutputLine$;">"
+  PRINT #5,"** GETS$--Returning: <";OutputLine$;">"
   GetS$=Outputline$
   CALL IbStat(" >")
   RECS=RECS+1
   CALL PrCha(25,71,6,RIGHT$("     "+STR$(RECS),6),15,4)
-  PRINT #5,"**GETS-- end"  
+  PRINT #5,"** GETS$--End"
 END FUNCTION
 
 SUB BufC SHARED '************************** BufferClear ************************
@@ -377,15 +381,15 @@ FUNCTION CodeTrans$(Incode$, Outcode$,Instring$,Flg%) SHARED ' *** CodeTranslati
   FOR i1%=1 TO LEN(Instring$)
     ichar$=MID$(Instring$,i1%,1)
     index%=INSTR(Outcode$,ichar$)
-    IF index%=0 THEN index%=1 : PRINT #5, "CODETRANS -- Char 0x";StringHex$(ichar$);" not found!! - Index set to 1"
-'     index%=INSTR(Outcode$,MID$(Instring$,i1%,1))
+    IF index%=0 THEN index%=1 : PRINT #5, "** CODETRANS--Char 0x";StringHex$(ichar$);" not found!! - Index set to 1"
+    ' index%=INSTR(Outcode$,MID$(Instring$,i1%,1))
     Outstring$=Outstring$+MID$(Incode$,index%,1)
   NEXT i1%
   IF Flg%=1 THEN
-    PRINT #5,"** TranI-";Instring$
-    PRINT #5,"** TIHex-";StringHex(Instring$)
-    PRINT #5,"** TranO-";Outstring$
-    PRINT #5,"** TOHex-";StringHex(Outstring$)
+    PRINT #5,"** CODETRANS--In        : ";Instring$
+    PRINT #5,"** CODETRANS--In (Hex)  : ";StringHex(Instring$)
+    PRINT #5,"** CODETRANS--Out       : ";Outstring$
+    PRINT #5,"** CODETRANS--Out (Hex) : ";StringHex(Outstring$)
   END IF
   CodeTrans$=Outstring$
 END FUNCTION

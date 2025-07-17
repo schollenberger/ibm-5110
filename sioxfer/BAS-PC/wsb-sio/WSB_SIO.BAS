@@ -43,12 +43,13 @@ START:
   RS1E$      = CHR$(30)                                 'RS  X'1E'
   DLE$       = CHR$(16)                                 'DLE X'10'
   LFE$       = CHR$(21)+CHR$(30)                        'NL+EB1 X'151E'
-' LFE$       = CHR$(21)+CHR$(30)+CHR$(31)               'NL+EB1 X'151E1F'
+'  LFE$       = CHR$(21)+CHR$(30)+CHR$(31)               'NL+EB1 X'151E1F'
   EOFP$      = CHR$( 4)+CHR$(21)+CHR$(30)+CHR$(31)      'EOT+LF+RS+US X'04151E1F'
   EOFG$      = CHR$( 4)+CHR$(30)+CHR$(31)               'EOT+RS+US X'041E1F'
   Ef%        = 0                                        ' default values
-  EOLIN$    = ""                                        'Current EOL string on get
-  EOLOUT$   = ""                                        'Current EOL string on put
+  EOLIN$     = ""                                       'Current EOL string on get
+  EOLOUT$    = ""                                       'Current EOL string on put
+  EOBUFIN$   = CHR$(141)+CHR$(10)                       'END OF BUFFER on get 0x8D 0x0A
   Men1%      = 2  ' Initial position on first screen
   Error.Cnt% = 0
   Rec.Cnt%   = 0
@@ -240,7 +241,7 @@ DefSwPa:
 CodeSel:                                    'Select code page called via GOSUB to keep
                                             'Variables PUBLIC
   SELECT CASE P18$
-    CASE "EBCDIC" : T18$=EBCDIC$ : EOLIN$=LFE$
+    CASE "EBCDIC" : T18$=EBCDIC$ : EOLIN$=LFE$+CR$
     CASE "ASCII" : T18$=CP437$  : EOLIN$=CR$
     CASE "CP5110" : T18$=CP5110$ : EOLIN$=LFE$
     CASE "CP5100" : T18$=CP5100$ : EOLIN$=LFE$
@@ -248,7 +249,7 @@ CodeSel:                                    'Select code page called via GOSUB t
     CASE "CI5100" : T18$=CI5100$ : EOLIN$=LFE$
   END SELECT
   SELECT CASE P19$
-    CASE "EBCDIC" : T19$=EBCDIC$ : EOLOUT$=LFE$
+    CASE "EBCDIC" : T19$=EBCDIC$ : EOLOUT$=RS1E$+CR$         ' wasLFE$+CR$
     CASE "ASCII"  : T19$=CP437$  : EOLOUT$=CR$
     CASE "CP5110" : T19$=CP5110$ : EOLOUT$=LFE$
     CASE "CP5100" : T19$=CP5100$ : EOLOUT$=LFE$

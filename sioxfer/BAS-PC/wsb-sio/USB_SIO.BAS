@@ -57,14 +57,14 @@ IB.DEB:                                          'Debug Routine for SIO
    CALL PrCha(24,1,80,"Data: ",15,1)
    CALL RdCha(24,7,74,Datstr$,15,2) : Datstr$=RTRIM$(Datstr$)
    PRINT #5,"PMenu2: Sending Datstr$ (Hex): <";StringHex$(Datstr$);"> followed by <";StringHex$(EOLOUT$);">"
-'   CALL PUTS(Datstr$)
+   ' CALL PUTS(Datstr$)
    CALL PUTSConv(Datstr$)   'Don't convert the EOL characters
    CALL PUTS(EOLOUT$)
    RETURN
  Pmenu3:                                         'GETS (Get String from Bus)
    CALL PrCha(24,1,80,"Length of Record: ",15,1)
    CALL RdNum(24,19,2,RN,15,2)
-'   Datstr$ = GETS$(INT(RN))
+   ' Datstr$ = GETS$(INT(RN))
    Datstr$ = GETSConv$(INT(RN))
    CALL PrCha(24,1,80,Datstr$,15,1)
    PRINT #5,"PMenu3: Got Datstr$ (Hex): <";StringHex$(Datstr$);">"
@@ -259,7 +259,7 @@ FUNCTION GetS$(LRec) SHARED '************** GETS  ( BUSIN Datstr$ ) ************
         IByte$=MID$(ASCFILE2$,CharIndex%,1) : CharIndex%=CharIndex%+1
         IF CharIndex%>LEN(ASCFILE2$) THEN : CharIndex%=1
       ELSEIF P21$="3" THEN
-         IByte$=MID$(ASCFILE3$,CharIndex%,1) : CharIndex%=CharIndex%+1
+        IByte$=MID$(ASCFILE3$,CharIndex%,1) : CharIndex%=CharIndex%+1
         IF CharIndex%>LEN(ASCFILE3$) THEN : CharIndex%=1
       ELSEIF P21$="4" THEN
         IByte$=MID$(CP5110FILE1$,CharIndex%,1) : CharIndex%=CharIndex%+1

@@ -13,7 +13,13 @@
 '* Test USB_SIO functions                                          *
 '* Manual Interface to talk with the IBM 5110 via the serial line  *
 '*                                                                 *
-'* June 2025 W. Schollenberger                                                                 *
+'* June 2025 W. Schollenberger                                     *
+'*                                                                 *
+'* 16.06.2025 WSB - 8-bit EBCDIC GET / PUTtransfer with IBM 5110   *
+'*                  IBM 5110 Program SIO8IO                        *
+'* 20.07.2025 WSB - 7-bit ASCII support WIP                        *
+'*                                                                 *
+'*                                                                 *
 '*******************************************************************
 
   GOTO START
@@ -29,7 +35,7 @@
 START:
 
   PROG$      = "WSB_SIO"                                 'Program Name
-  EC$        = "1.0 (17.6.2025)"                         'program version
+  EC$        = "1.1 (20.7.2025)"                         'program version
 
   Options$   = UCASE$(LEFT$(COMMAND$,16))
   SIO.Cflg%  = SGN(INSTR(Options$,"/C"))                'Code Pages in Msg File
@@ -68,15 +74,15 @@ START:
                                                                                     ' Parameters
   P11$       = "COM1"   : C11$       = "COM1 COM2 COM3 COM4 COM5 COM6 COM7 COM8"    ' PO* Port
   P12$       = "9600"   : C12$       = "75 110 150 300 600 1200 1800 2400 4800 9600 19200 38400 57600 115200 "  ' BR* Baudrate
-  P13$       = "N"      : C13$       = "N E O S M"                                  ' PA* Parity
-  P14$       = "8"      : C14$       = "5 6 7 8 H P"                                ' BI  Bits
+  P13$       = "E"      : C13$       = "N E O S M"                                  ' PA* Parity
+  P14$       = "7"      : C14$       = "5 6 7 8 H P"                                ' BI  Bits
   P15$       = "256"                                                                ' RL  Max. Recordlength (1-32000)
   P16$       = "2"      : C16$       = "1 2"                                        ' ST* Stop Bits
   P17$       = "0"      : C17$       = "0 1 2 3 4 5 6 7 8 9 A B C D E F"            ' IM  Ignore Mode
   P18$       = "EBCDIC" : C18$       = "EBCDIC CP5110 CP5100 ASCII CI5110 CI5100"   ' CI  Code in (Translation on GET)
   P19$       = "EBCDIC" : C19$       = "EBCDIC CP5110 CP5100 ASCII HEX"             ' CO  Code Out (Translation on PUT)
-'  P19$       = "ASCII"
-'  P18$       = "ASCII"
+  P19$       = "ASCII"
+  P18$       = "ASCII"
 
   P20$       = "99999"
   P21$       = "0"      : C21$       = "0 1 2 3"
@@ -299,6 +305,7 @@ OpenCom:                                                'Open Com port
   END IF
   CALL IbStat("??")
   SioOptions$= LTRIM$(RS$+P22$+PE$+ME$+FE$)
+  PRINT #5,"**OpenCom--Calling INIT with: ";P11$,P12$,P13$,Bits$,P15$,P16$,SioOptions$
   CALL INIT(P11$,P12$,P13$,Bits$,P15$,P16$,SioOptions$,SIO.Dflg%)
   CALL IbStat("..")
   PRINT #6,PROG$;" OPEN: ";DATE$;" ";TIME$

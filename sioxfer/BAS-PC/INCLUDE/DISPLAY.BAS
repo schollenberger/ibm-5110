@@ -145,17 +145,21 @@ SUB FSInp(L%,C%,WC$,CFT%,CBT%,CFI%,CBI%,CL%,CC%,LB%,LE%,CB%,CE%,ME$,ME%)
 END SUB
 
 SUB Enter                                     'WAIT FOR ENTER
-' New version of enter 2025-07-07
+' New version of enter 2025-07-20 - abort on CTRL-C and ESC key
      PRINT #5,"Cleaning input buffer"
      i$ = INKEY$
      WHILE LEN(i$) <> 0
         i$ = INKEY$
      WEND
      PRINT #5,"Waiting for CR"
-Enter1:
+  Enter1:
      DELAY(0.2)
-     i$ = INKEY$   
-     IF i$<>CHR$(13) GOTO Enter1 ELSE
+     i$ = INKEY$
+     IF i$=CHR$(13) GOTO Enter2
+     IF i$=CHR$(03) GOTO PEnd
+     IF i$=CHR$(27) GOTO PEnd
+     GOTO Enter1
+  Enter2:
      PRINT #5,"Continue..."
 END SUB
 

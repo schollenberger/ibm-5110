@@ -70,7 +70,7 @@ START:
   Ef%        = 0                                        ' default values
   EOLIN$     = ""                                       'Current EOL string on get
   EOLOUT$    = ""                                       'Current EOL string on put
-  EOBUFIN$   = CHR$(141)+CHR$(10)                       'END OF BUFFER on get 0x8D 0x0A
+  EOBUFIN$   = ""                                       'END OF BUFFER on get (0x8D 0x0A for EBCDIC)
   Men1%      = 2  ' Initial position on first screen
   Men2%      = 3  ' Initial position on second screen
   Error.Cnt% = 0
@@ -90,6 +90,8 @@ START:
                                                                                     ' Parameters
   P11$       = "COM1"   : C11$       = "COM1 COM2 COM3 COM4 COM5 COM6 COM7 COM8"    ' PO* Port
   P12$       = "9600"   : C12$       = "75 110 150 300 600 1200 1800 2400 4800 9600 19200 38400 57600 115200 "  ' BR* Baudrate
+'  P13$       = "N"      : C13$       = "N E O S M"                                  ' PA* Parity
+'  P14$       = "8"      : C14$       = "5 6 7 8 H P"                                ' BI  Bits
   P13$       = "E"      : C13$       = "N E O S M"                                  ' PA* Parity
   P14$       = "7"      : C14$       = "5 6 7 8 H P"                                ' BI  Bits
   P15$       = "256"                                                                ' RL  Max. Recordlength (1-32000)
@@ -102,8 +104,9 @@ START:
 
   P20$       = "99999"
   P21$       = "0"      : C21$       = "0 1 2 3"
-  P22$       = ""
-  P22$       = ",CS60000"
+'  P22$       = ""
+  P22$       = ",CS0"      ' no HW handshake
+'  P22$       = ",CS60000"
 
   T18$       = ""                   'code page IN
   T19$       = ""                   'code page OUT
@@ -118,8 +121,8 @@ START:
   TracFile$  = TraFil$+".tra"
   TestFile$  = PROG$+".tst"
 
-  SrcFile$   = "?"
-  DstFile$   = "?"
+  SrcFile$   = "tput.txt"
+  DstFile$   = "tget.txt"
   CtlFil$    = PROG$
 
   OPEN MsgFile$ FOR OUTPUT AS#5
@@ -137,11 +140,10 @@ START:
   CALL SetXltCI5110
   CALL SetXltCP5100
   CALL SetXltCI5100
+  PRINT #5,"Select code pages Input = ";P18$;"  Output = ";P19$
 
   GOSUB CodeSel                 ' assigns configured code pages to T18$, T19$
                                 ' and CPlocal$
-
-  PRINT #5, "++++ EOLIN and EOLOUT: ";StringHex(EOLIN$); " - ";StringHex$(EOLOUT$)
 
   IF  SIO.Dflg% = 1 THEN
     CALL SetASCFILE
@@ -149,7 +151,7 @@ START:
   END IF
 
 ' Here we go
-  PRINT #5,"Using codepages:  Input = ";P18$,"Output: ";P19$
+  PRINT #5, "Current values of EOLIN and EOLOUT$: ";StringHex(EOLIN$); " - ";StringHex$(EOLOUT$)
 
   DIM Scn1$(21),Scn2$(21)
 
@@ -256,6 +258,10 @@ SMenu2:                                                 'MENU 2
   CALL FSInp(Men2%+2,1,"",15,1,15,1,CL%,CC%,3,14,1,80,"E SDPGM     ",M2%)
   IF M2%=0 THEN M2%=CL%-2
   Z%=M2%+2
+  ' Debug
+  CALL LiPrt(2,"M2% = "+STR$(M2%),14,1)
+  ' CALL Enter
+
   ON M2% GOTO SMenu1,SMenu2,SFile,Dfile,PutFile,GetFile,Messg,Smenu2,Smenu2
   GOTO SMenu2
 
@@ -323,6 +329,8 @@ GFile:
       IF Rec.Cnt%= 0 THEN Ef%=1
       IF SIO.Tflg%=1 THEN : PRINT #6,"** GETS-";Inputline$
       PRINT #1,Inputline$
+      CALL PrCha(25,71,6,RIGHT$("     "+STR$(RECS),6),15,4)
+
     END IF
   WEND
   CALL WrCha(24,61,20,"")
@@ -472,8 +480,8 @@ DefSwPa:
 CodeSel:                                    'Select code page called via GOSUB to keep
                                             'Variables PUBLIC
   SELECT CASE P18$
-    CASE "EBCDIC" : T18$=EBCDIC$ : EOLIN$=LFE$+CR$
-    CASE "ASCII" : T18$=CP437$  : EOLIN$=CR$
+    CASE "EBCDIC" : T18$=EBCDIC$ : EOLIN$=LFE$+CR$ : EOBUFIN$=CHR$(141)+CHR$(10)   'END OF BUFFER on get 0x8D 0x0A
+    CASE "ASCII"  : T18$=CP437$  : EOLIN$=CR$+LF$  : EOBUFIN$=CR$+LF$
     CASE "CP5110" : T18$=CP5110$ : EOLIN$=LFE$
     CASE "CP5100" : T18$=CP5100$ : EOLIN$=LFE$
     CASE "CI5110" : T18$=CI5110$ : EOLIN$=LFE$

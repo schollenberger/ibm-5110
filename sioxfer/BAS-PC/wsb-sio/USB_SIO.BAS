@@ -281,16 +281,35 @@ FUNCTION GetS$(LRec) SHARED '************** GETS  ( BUSIN Datstr$ ) ************
     IF Tra%=1 THEN
       InputlineG$=InputlineG$+IByte$
       PRINT #5, "** GETS$(Tra)--Content Buf$=";StringHex$(Buf$)
-      IF RIGHT$(Buf$,LEN(EOLIN$))=EOLIN$ THEN
-        PRINT #5, "** GETS$(Tra)--Found EOL, removing it from input and finish"
-        REPLACE EOLIN$ WITH "" IN InputlineG$
-        GOTO ENDGS
-      ELSEIF  RIGHT$(Buf$,LEN(EOBUFIN$))=EOBUFIN$ THEN
-        PRINT #5, "** GETS$(Tra)--Found END OF BUFFER, removing it from input and continue"
+      IF LEN(EOLIN$) > LEN(EOBUFIN) THEN
+        ' EOLIN$ is longer than EOBUFIN$ - process EOLIN first
+        IF RIGHT$(Buf$,LEN(EOLIN$))=EOLIN$ THEN
+          PRINT #5, "** GETS$(Tra)--Found EOL, removing it from input and finish"
+          REPLACE EOLIN$ WITH "" IN InputlineG$
+          GOTO ENDGS
+        ELSEIF RIGHT$(Buf$,LEN(EOBUFIN$))=EOBUFIN$ THEN
+          PRINT #5, "** GETS$(Tra)--Found END OF BUFFER, removing it from input and continue"
         REPLACE EOBUFIN$ WITH "" IN InputlineG$
-        ' GOTO ENDGS
-      ELSEIF Buf$=EOFG$ THEN
-        PRINT #5, "** GETS$(Tra)--Found EOFG, removing it from input and finish"
+          ' Strip trailing blanks from from end of buffer and reset record counter
+          InputlineG$=RTRIM$(InputlineG$)
+          i%=1
+        END IF
+      ELSE
+        ' EOLIN$ and EOBUFIN$ have the same number of characters - process EOBUFIN$ first
+        IF RIGHT$(Buf$,LEN(EOBUFIN$))=EOBUFIN$ THEN
+          PRINT #5, "** GETS$(Tra)--Found END OF BUFFER, removing it from input and continue"
+          REPLACE EOBUFIN$ WITH "" IN InputlineG$
+          ' Strip trailing blanks from from end of buffer and reset record counter
+          InputlineG$=RTRIM$(InputlineG$)
+        END IF
+        IF RIGHT$(Buf$,LEN(EOLIN$))=EOLIN$ THEN
+            PRINT #5, "** GETS$(Tra)--Found EOL, removing it from input and finish"
+            REPLACE EOLIN$ WITH "" IN InputlineG$
+            GOTO ENDGS
+        END IF
+      END IF
+      IF Buf$=EOFG$ THEN
+        PRINT #5, "** GETS$(Tra)--Found EOFG, removing it from input and finish with EOF"
         REPLACE EOFG$ WITH "" IN InputlineG$
         Ef%=1
         GOTO ENDGS

@@ -1,0 +1,14 @@
+Hallo
+-- Nun kommen 37 Zeichen --
+HALLO, DU DA WIE GEHT ES DIR DENN SO?
+-- Alphabet --
+abcdefghijklmnopqrstuvwxyz
+ABCDEFGHIJKLMNOPQRSTUVWXYZ
+-- Zahlen --
+0123456789
+0123456789
+-- Sonderzeichen --
+,.-;:_ #'+*~ ^°
+!"§$%&/()=?\´` @µ
+--
+END

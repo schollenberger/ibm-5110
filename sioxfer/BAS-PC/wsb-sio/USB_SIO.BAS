@@ -162,7 +162,6 @@ IB.DEB:                                          'Debug Routine for SIO
    WEND
    RETURN
 
-''END SUB
 
 '*** USB_SIO Functions ***
 
@@ -281,6 +280,14 @@ FUNCTION GetS$(LRec) SHARED '************** GETS  ( BUSIN Datstr$ ) ************
     IF Tra%=1 THEN
       InputlineG$=InputlineG$+IByte$
       PRINT #5, "** GETS$(Tra)--Content Buf$=";StringHex$(Buf$)
+
+      IF Buf$=EOFG$ THEN
+        PRINT #5, "** GETS$(Tra)--Found EOFG, removing it from input and finish with EOF"
+        REPLACE EOFG$ WITH "" IN InputlineG$
+        Ef%=1
+        GOTO ENDGS
+      END IF
+
       IF LEN(EOLIN$) > LEN(EOBUFIN) THEN
         ' EOLIN$ is longer than EOBUFIN$ - process EOLIN first
         IF RIGHT$(Buf$,LEN(EOLIN$))=EOLIN$ THEN
@@ -308,14 +315,6 @@ FUNCTION GetS$(LRec) SHARED '************** GETS  ( BUSIN Datstr$ ) ************
             GOTO ENDGS
         END IF
       END IF
-      IF Buf$=EOFG$ THEN
-        PRINT #5, "** GETS$(Tra)--Found EOFG, removing it from input and finish with EOF"
-        REPLACE EOFG$ WITH "" IN InputlineG$
-        Ef%=1
-        GOTO ENDGS
-      ELSE
-        GOTO GETBS
-      END IF
     ELSEIF Hex%=1 THEN
       IF Buf$=EOFG$ THEN
         REPLACE EOFG$ WITH "" IN Buf$
@@ -342,8 +341,8 @@ FUNCTION GetS$(LRec) SHARED '************** GETS  ( BUSIN Datstr$ ) ************
     GETBS:
   NEXT i%
   ENDGS:
-  PRINT #5,"** GETS$--Received ";LEN(InputlineG$);" Character."
-  PRINT #5,"** GETS$--Data: <-";InputlineG$;"->"
+  PRINT #5,"** GETS$--Received ";LEN(InputlineG$);" Character - EOF flag = ";Ef%
+  PRINT #5,"** GETS$--Data before char ignore: <";InputlineG$;">"
   ' Ingore char section - controlled by Ignore Mode (IM) parameter P17$'
      IF Ig151E%=1 THEN : REPLACE LFE$     WITH ""        IN InputlineG$
      IF Ig15%  =1 THEN : REPLACE CHR$(21) WITH CHR$(223) IN InputlineG$
@@ -362,6 +361,39 @@ FUNCTION GetS$(LRec) SHARED '************** GETS  ( BUSIN Datstr$ ) ************
   CALL PrCha(25,71,6,RIGHT$("     "+STR$(RECS),6),15,4)
   PRINT #5,"** GETS$--End"
 END FUNCTION
+
+'#######
+FUNCTION GetLine$(LRec) SHARED '************** GETLine  ( BUSIN Datstr$ ) ************
+  LOCAL i%, j%, InputlineG$
+  SIO.FCTN$="GETLINE"
+  CALL IbStat("<<")
+  KeyB$=INKEY$
+  IF KeyB$="#" THEN
+    Ef%=1
+    CALL SIOTrac("USER BREAK")                   'INTERRUPTED BY OPERATOR
+    GOTO ENDGSL
+  END IF
+
+'  PRINT #5, "** GETLINE$--EOLIN$ (hex)= ";StringHex$(EOLIN$);" EOBUFIN$ (hex)= ";StringHex$(EOBUFIN$);"   Flag Tra% = ";Tra%
+
+  LINE INPUT #7, InputLineG$
+  REPLACE LF$ WITH "" IN InputlineG$
+
+  ENDGSL:
+
+  PRINT #5,"** GETLine$--Received ";LEN(InputlineG$);" Character - EOF flag = ";Ef%
+  PRINT #5,"** GETLine$--Data before char ignore: <";InputlineG$;">"
+
+  GetLine$=InputlineG$
+'  CALL IbStat(" >")
+  RECS=RECS+1
+  CALL PrCha(25,71,6,RIGHT$("     "+STR$(RECS),6),15,4)
+  PRINT #5,"** GETLine$--End"
+END FUNCTION
+
+'#######
+
+
 
 SUB BufC SHARED '************************** BufferClear ************************
   LOCAL IByte$, i%

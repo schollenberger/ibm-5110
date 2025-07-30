@@ -1,6 +1,6 @@
   $COMPILE EXE                                          'Compiler statements
   $CPU 80386
-  ''$COM 32000
+  $COM 32000             ' You need this to receive long files on slow machines
   $LIB COM+
   ''$LIB LPT ON
   $OPTION CNTLBREAK ON
@@ -66,7 +66,11 @@ START:
   LFE$       = CHR$(21)+CHR$(30)                        'NL+EB1 X'151E'
   ' LFE$       = CHR$(21)+CHR$(30)+CHR$(31)               'NL+EB1 X'151E1F'
   EOFP$      = CHR$( 4)+CHR$(21)+CHR$(30)+CHR$(31)      'EOT+LF+RS+US X'04151E1F'
-  EOFG$      = CHR$( 4)+CHR$(30)+CHR$(31)               'EOT+RS+US X'041E1F'
+
+' #TODO# need to make EFOG chars code page dependent
+'  EOFG$      = CHR$( 4)+CHR$(30)+CHR$(31)               'EOT+RS+US X'041E1F - EBCDIC
+  EOFG$      = CHR$( 3)+CR$+LF$                          'EOT+cr+LF X'040D0A - ASCII
+
   Ef%        = 0                                        ' default values
   EOLIN$     = ""                                       'Current EOL string on get
   EOLOUT$    = ""                                       'Current EOL string on put
@@ -104,9 +108,11 @@ START:
 
   P20$       = "99999"
   P21$       = "0"      : C21$       = "0 1 2 3"
-'  P22$       = ""
-  P22$       = ",CS0"      ' no HW handshake
-'  P22$       = ",CS60000"
+
+'  P22$       = ""          ' CTS handshake - default timeout
+  P22$       = ",CS0"      ' no CTS handshake - not a good idea !!
+'  P22$       = ",CS60000"  ' wait long for CTS to become active
+
 
   T18$       = ""                   'code page IN
   T19$       = ""                   'code page OUT
@@ -292,10 +298,13 @@ PFile:
     LINE INPUT #1, Inputline$
     Inputline$=RTRIM$(Inputline$)
     IF P1=1 THEN : CALL Info(Inputline$,0,0)
-    PUTSConv(Inputline$)
+    CALL PUTSConv(Inputline$)
+    CALL PUTS(EOLOUT$)
+    DELAY 0.1
+
   WEND
   CLOSE #1
-  PUTS(EOFP$)
+  PUTS(EOFP$+EOLOUT$)
   StopTime=INT(TIMER)
   RunTime=StopTime-StartTime
   IF (P2=1) THEN
@@ -321,18 +330,23 @@ GFile:
   OPEN DstFile$ FOR OUTPUT AS#1
   Inputline$=""
   Rec.Cnt%=VAL(P20$)
+  PRINT #5, "** GFILE - Start to read file..."
   CALL WrCha(24,61,20,"--Press # to stop")
   WHILE Ef%=0
+
     Inputline$=GetSConv$(VAL(P15$))
+''    Inputline$=GetLine$(2)
+
     IF Ef%=0 THEN
       Rec.Cnt%=Rec.Cnt%-1
       IF Rec.Cnt%= 0 THEN Ef%=1
       IF SIO.Tflg%=1 THEN : PRINT #6,"** GETS-";Inputline$
       PRINT #1,Inputline$
-      CALL PrCha(25,71,6,RIGHT$("     "+STR$(RECS),6),15,4)
-
+      ''CALL PrCha(25,71,6,RIGHT$("     "+STR$(RECS),6),15,4)
     END IF
   WEND
+  PRINT #5, "** GFILE - ...done"
+
   CALL WrCha(24,61,20,"")
   CLOSE #1
   StopTime=INT(TIMER)

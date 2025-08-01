@@ -1,5 +1,7 @@
 ' USBSIO Functions 2025-06-30 - modified Werner Schollenberger
-'                             - Code conversions inside the basic functions
+'  - Code conversions inside the basic functions
+'  - GETS and PUTS are line based and respect EOLIN and EOLOUT characters.
+'    This is because the IBM 51x0 cannot properly handle stream type data.
 
    '****************************************************************************
    '* Subroutines for SIO transfers                                            *
@@ -62,8 +64,8 @@ IB.DEB:                                          'Debug Routine for SIO
    CALL PUTS(EOLOUT$)
    RETURN
  Pmenu3:                                         'GETS (Get String from Bus)
-   CALL PrCha(24,1,80,"Length of Record: ",15,1)
-   CALL RdNum(24,19,2,RN,15,2)
+   CALL PrCha(24,1,80,"Max. length of Record: ",15,1)
+   CALL RdNum(24,24,2,RN,15,2)
    ' Datstr$ = GETS$(INT(RN))
    Datstr$ = GETSConv$(INT(RN))
    CALL PrCha(24,1,80,Datstr$,15,1)
@@ -75,13 +77,14 @@ IB.DEB:                                          'Debug Routine for SIO
    CALL RdCha(24,13,15,Datstr$,15,2)
 '   CALL PUTS(Datstr$)
    CALL PUTSConv(Datstr$)
+   CALL PUTS(EOLOUT$)
 '   Datstr$=GETS$(4)
    Datstr$=GETSConv$(4)
    CALL PrCha(24,41,40,MID$(Datstr$,1,4),15,1)
    CALL Enter : RETURN
  Pmenu5:                                         'GETR (Get String from Bus)
-   CALL PrCha(24,1,80,"Datarate in sec: ",15,1)
-   CALL RdNum(24,18,6,RN,15,2)
+   CALL PrCha(24,1,80,"Get max. 20 chars - delay in sec: ",15,1)
+   CALL RdNum(24,34,6,RN,15,2)
    SIO.BRK$=""
    WHILE SIO.BRK$<>CHR$(27)
 '     A$ = GETS$(4)
@@ -91,15 +94,16 @@ IB.DEB:                                          'Debug Routine for SIO
    WEND
    RETURN
  Pmenu6:                                         'RPUT (Put String on Bus)
-   CALL PrCha(24,1,80,"Datarate in sec: ",15,1)
-   CALL RdNum(24,18,6,RN,15,2)
+   CALL PrCha(24,1,80,"Delay in sec: ",15,1)
+   CALL RdNum(24,14,6,RN,15,2)
    CALL PrCha(24,1,80,"Data: ",15,1)
    CALL RdCha(24,7,74,Datstr$,15,2) : Datstr$=RTRIM$(Datstr$)
    REPLACE "|" WITH CHR$(16) IN Datstr$          'use | for DLE
    SIO.STP$=""
    WHILE SIO.STP$<>CHR$(27)
 '     CALL PUTS(Datstr$) : DELAY(RN)
-     CALL PUTSConv(Datstr$+EOLOUT$) : DELAY(RN)
+     CALL PUTSConv(Datstr$)
+     CALL PUTS(EOLOUT$) : DELAY(RN)
      SIO.STP$=INKEY$
    WEND
    RETURN
@@ -111,6 +115,8 @@ IB.DEB:                                          'Debug Routine for SIO
 '    CALL PUTS(A$)
 '  WEND
 '  CLOSE #1
+   CALL PrCha(24,1,80,"Not implemented!!",15,1)
+   CALL ENTER
    RETURN
 
  Pmenu8:                                         'REPEAT PUTS + GETS
@@ -121,7 +127,8 @@ IB.DEB:                                          'Debug Routine for SIO
    SIO.STP$=""
    WHILE SIO.STP$<>CHR$(27)
 '    CALL PUTS(DatstrO$) : DELAY(RN)
-    CALL PUTSConv(DatstrO$+EOLOUT$)
+    CALL PUTSConv(DatstrO$)
+    CALL PUTS(EOLOUT$)
     Datstr$=GETS$(4)
     CALL PrCha(24,41,4,MID$(Datstr$,1,4),15,1)
     SIO.STP$=SIO.BRK$
@@ -175,7 +182,6 @@ FUNCTION INIT(Port$,Baud$,Parity$,Bits$,Recl$,SBits$,SioOptions$,Flg%) SHARED
     OPEN Comparm$ AS #7 LEN=32000
   END IF
   PRINT #5,"...DONE OPEN ";CHR$(34);Port$;CHR$(34)
-
 END FUNCTION
 
 FUNCTION SHUTDOWN(Port$,Flg%) SHARED
@@ -229,7 +235,6 @@ FUNCTION GetSConv$(LRec) SHARED 'Calls Gets$() and returns converted string
   GetSConv$ = ConvStr$
 End FUNCTION
 
-
 FUNCTION GetS$(LRec) SHARED '************** GETS  ( BUSIN Datstr$ ) ************
   LOCAL i%, j%, InputlineG$, IByte$
   SIO.FCTN$="GETS"
@@ -243,8 +248,7 @@ FUNCTION GetS$(LRec) SHARED '************** GETS  ( BUSIN Datstr$ ) ************
   InputlineG$=""
   Buf$=""
 
-  PRINT #5, "** GETS$--EOLIN$ (hex)= ";StringHex$(EOLIN$);" EOBUFIN$ (hex)= ";StringHex$(EOBUFIN$);"   Flag Tra% = ";Tra%
-
+  PRINT #5, "** GETS$--Separation chars in hex: EOLIN$ = ";StringHex$(EOLIN$);" EOBUFIN$ = ";StringHex$(EOBUFIN$);" EOFG$ = ";StringHex$(EOFG$);"   Flag Tra% = ";Tra%
   FOR i%=1 TO LRec
     IRun%=0
     IF SIO.Dflg%=1 THEN
@@ -271,7 +275,7 @@ FUNCTION GetS$(LRec) SHARED '************** GETS  ( BUSIN Datstr$ ) ************
         IF CharIndex%>LEN(CP5110FILE3$) THEN : CharIndex%=1
       END IF
     ELSE
-      GETFF:
+      GETFF:                                ' ignore 0xFF chars
       IByte$=INPUT$(1,#7)
       IF IByte$=CHR$(255) GOTO GETFF
       PRINT #5,"** GETS$<= ";IByte$;"  Hex: ";StringHex$(IByte$)
@@ -287,16 +291,16 @@ FUNCTION GetS$(LRec) SHARED '************** GETS  ( BUSIN Datstr$ ) ************
         Ef%=1
         GOTO ENDGS
       END IF
-
       IF LEN(EOLIN$) > LEN(EOBUFIN) THEN
         ' EOLIN$ is longer than EOBUFIN$ - process EOLIN first
         IF RIGHT$(Buf$,LEN(EOLIN$))=EOLIN$ THEN
           PRINT #5, "** GETS$(Tra)--Found EOL, removing it from input and finish"
           REPLACE EOLIN$ WITH "" IN InputlineG$
+          InputlineG$=RTRIM$(InputlineG$)
           GOTO ENDGS
         ELSEIF RIGHT$(Buf$,LEN(EOBUFIN$))=EOBUFIN$ THEN
           PRINT #5, "** GETS$(Tra)--Found END OF BUFFER, removing it from input and continue"
-        REPLACE EOBUFIN$ WITH "" IN InputlineG$
+          REPLACE EOBUFIN$ WITH "" IN InputlineG$
           ' Strip trailing blanks from from end of buffer and reset record counter
           InputlineG$=RTRIM$(InputlineG$)
           i%=1
@@ -308,10 +312,12 @@ FUNCTION GetS$(LRec) SHARED '************** GETS  ( BUSIN Datstr$ ) ************
           REPLACE EOBUFIN$ WITH "" IN InputlineG$
           ' Strip trailing blanks from from end of buffer and reset record counter
           InputlineG$=RTRIM$(InputlineG$)
+          i%=1
         END IF
         IF RIGHT$(Buf$,LEN(EOLIN$))=EOLIN$ THEN
             PRINT #5, "** GETS$(Tra)--Found EOL, removing it from input and finish"
             REPLACE EOLIN$ WITH "" IN InputlineG$
+            InputlineG$=RTRIM$(InputlineG$)
             GOTO ENDGS
         END IF
       END IF
@@ -362,8 +368,8 @@ FUNCTION GetS$(LRec) SHARED '************** GETS  ( BUSIN Datstr$ ) ************
   PRINT #5,"** GETS$--End"
 END FUNCTION
 
-'#######
-FUNCTION GetLine$(LRec) SHARED '************** GETLine  ( BUSIN Datstr$ ) ************
+'#######  not used anymore - was supposed to reduce read char losses
+FUNCTION GetLine$(LRec) SHARED '** GetLine  - read an entire line with LINE INPUT# command
   LOCAL i%, j%, InputlineG$
   SIO.FCTN$="GETLINE"
   CALL IbStat("<<")
@@ -373,26 +379,22 @@ FUNCTION GetLine$(LRec) SHARED '************** GETLine  ( BUSIN Datstr$ ) ******
     CALL SIOTrac("USER BREAK")                   'INTERRUPTED BY OPERATOR
     GOTO ENDGSL
   END IF
-
-'  PRINT #5, "** GETLINE$--EOLIN$ (hex)= ";StringHex$(EOLIN$);" EOBUFIN$ (hex)= ";StringHex$(EOBUFIN$);"   Flag Tra% = ";Tra%
-
+  PRINT #5, "** GetLine$--Flag Tra% = ";Tra%
   LINE INPUT #7, InputLineG$
   REPLACE LF$ WITH "" IN InputlineG$
 
   ENDGSL:
-
-  PRINT #5,"** GETLine$--Received ";LEN(InputlineG$);" Character - EOF flag = ";Ef%
-  PRINT #5,"** GETLine$--Data before char ignore: <";InputlineG$;">"
+  PRINT #5,"** GetLine$--Received ";LEN(InputlineG$);" Character - EOF flag = ";Ef%
+  PRINT #5,"** GetLine$--Data    : <";InputlineG$;">"
 
   GetLine$=InputlineG$
 '  CALL IbStat(" >")
   RECS=RECS+1
   CALL PrCha(25,71,6,RIGHT$("     "+STR$(RECS),6),15,4)
-  PRINT #5,"** GETLine$--End"
+  PRINT #5,"** GetLine$--End"
 END FUNCTION
 
 '#######
-
 
 
 SUB BufC SHARED '************************** BufferClear ************************

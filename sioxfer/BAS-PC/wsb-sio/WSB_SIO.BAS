@@ -59,6 +59,7 @@ START:
   SIO.Tflg%  = 1        'Overwrite command line during dev phase
 
   IB.Stat$   = "  "                                     'IB Status
+  ComStat%   = 0                                        'COM status 0/1/2 - off/on/opening
   CR$        = CHR$(13)                                 'CR  X'0D'
   LF$        = CHR$(10)                                 'LF  X'0A'
   RS1E$      = CHR$(30)                                 'RS  X'1E'
@@ -233,6 +234,8 @@ SMenu1:                                                 'MENU 1
   FOR Z%=4  TO 24 : CALL LiPrt(Z%,Scn1$(Z%-3),15,1) : NEXT Z%
   ChkbFlg%=0 : SpinFlg%=0
   GOSUB DefSwPa
+  CALL WrComStat
+
   CALL FSInp(Men1%+2,1,"",15,1,15,1,CL%,CC%,4,10,1,80,"O C   T M D E ",M1%)
 
   'IF M1%=0 THEN M1%=INT(CL%-3)
@@ -261,6 +264,8 @@ SMenu2:                                                 'MENU 2
   'CALL PrCha(21,18,62,Message$ ,14,1)
   'CALL PrCha(22,18,62,CtlFil$  ,14,1)
   'CALL PrCha(23,18,62,DmpTline$,14,1)
+  CALL WrComStat
+
   CALL FSInp(Men2%+2,1,"",15,1,15,1,CL%,CC%,3,14,1,80,"E SDPGM     ",M2%)
   IF M2%=0 THEN M2%=CL%-2
   Z%=M2%+2
@@ -282,8 +287,13 @@ Dfile:
   GOTO SMenu2
 
 PutFile:
-  GOSUB PFile
-  CALL Info("Filetransfer ended - Press enter",1,1)
+  IF ComStat% = 1 THEN
+    GOSUB PFile
+    CALL Info("Filetransfer ended - Press enter",1,1)
+  ELSE
+    Msg$="COM port not open! Press enter to return...."
+    GOSUB ErrMsg
+  END IF
   GOTO SMenu2
 
 PFile:
@@ -314,8 +324,13 @@ PFile:
 RETURN
 
 GetFile:
-  GOSUB GFile
-  CALL Info("Filetransfer ended - Press enter",1,1)
+  IF ComStat% = 1 THEN
+    GOSUB GFile
+    CALL Info("Filetransfer ended - Press enter",1,1)
+  ELSE
+    Msg$="COM port not open! Press enter to return...."
+    GOSUB ErrMsg
+  END IF
   GOTO SMenu2
 
 GFile:
@@ -358,10 +373,16 @@ GFile:
 RETURN
 
 Messg:
-  GOSUB Mess
+  IF ComStat% = 1 THEN
+    GOSUB Mess
+    CALL Info("Message sent - Press enter",1,1)
+  ELSE
+    Msg$="COM port not open! Press enter to return...."
+    GOSUB ErrMsg
+  END IF
   GOTO SMenu2
 
-Mess:
+Mess:                                  ' Send message via serial
   GOSUB CodeSel
   CALL RdCha(21,18,62,Message$,15,2)
   Msg$=DLE$+"MESSAGE="+RTRIM$(Message$)
@@ -370,8 +391,6 @@ Mess:
   IF SIO.Tflg%=1 THEN : PRINT #6,"** Mess-";Msg$
   RETURN
 
-
-'  PRINT "Hello WORLD"
 
 MANSIO:
   GOSUB IB.DEB                  ' USB_SIO Menu
@@ -384,8 +403,8 @@ MANSIO:
 ERRFINAL:
   KEY OFF : CLS : ON TIMER (5) GOSUB Clock : TIMER ON
   PRINT "Exited with error: "+STR$(ERR)
-  ' GOTO SMENU1
-  STOP
+  GOTO SMENU1
+  ''STOP
 
 '************** Menu execution code  *******************************************
 
@@ -402,11 +421,11 @@ OpenCom:                                                'Open Com port
   ELSE
     Bits$=P14$
   END IF
-  CALL IbStat("??")
+  ComStat%=2 : CALL WrComStat
   SioOptions$= LTRIM$(RS$+P22$+PE$+ME$+FE$)
   PRINT #5,"**OpenCom--Calling INIT with: ";P11$,P12$,P13$,Bits$,P15$,P16$,SioOptions$
   CALL INIT(P11$,P12$,P13$,Bits$,P15$,P16$,SioOptions$,SIO.Dflg%)
-  CALL IbStat("..")
+  ComStat%=1 : CALL WrComStat
   PRINT #6,PROG$;" OPEN: ";DATE$;" ";TIME$
   Men1%=6
   GOTO SMenu1
@@ -415,7 +434,7 @@ CloseCom:                                               'Close Com port
   ' SIO.Dflg%=1
   ' CALL INIT(P11$,P12$,P13$,P14$,P15$,P16$,SioOptions$,SIO.Dflg%)
   CALL SHUTDOWN(P11$,SIO.Dflg%)
-  CALL IbStat("  ")
+  ComStat%=0 : CALL WrComStat
   PRINT #6,"SIOXFER CLOSE ";DATE$;" ";TIME$
   Men1%=2
   GOTO SMenu1
@@ -435,8 +454,13 @@ CDOSin:                                                 'DOS Prompt
   GOTO SMenu1
 
 SIOManOp:                                'Manual Options (Module USB_SIO)
-  GOSUB IB.DEB
-  'CALL SIO.MANOPS
+  IF ComStat% = 1 THEN
+    GOSUB IB.DEB
+    'CALL SIO.MANOPS
+  ELSE
+    Msg$="COM port not open! Press enter to return...."
+    GOSUB ErrMsg
+  END IF
   GOTO SMenu1
 
 PEnd:                                                   'Program - End
@@ -511,14 +535,15 @@ CodeSel:                                    'Select code page called via GOSUB t
   RETURN
 
 ErrH:                                                   'System Errorhandling
-  CALL WrCha(25,1,78,"ERROR "+STR$(ERR))
-  CALL Enter :
+  CALL WrCha(25,1,76,"ERROR "+STR$(ERR))
+  CALL Enter
   CALL ClrBlk(25,1,25,70)
   GOTO ERRFINAL
   RETURN
 
 ErrMsg:                                                 'User Errorhandling
   CALL WrCha(25,1,70,Msg$)
+  BEEP
   CALL Enter : CALL ClrBlk(25,1,25,70)
   RETURN
 
@@ -537,3 +562,17 @@ FUNCTION Info(Msg$,B%,E%)                     '*** Print info in line 25 ***
   IF B%=1 THEN : BEEP
   IF E%=1 THEN : CALL Enter
 END FUNCTION
+
+SUB WrComStat SHARED '************ COM port status - use global variable
+  SELECT CASE ComStat%
+    CASE 0
+      CALL IbStat("  ")
+    CASE 1
+      CALL IbStat("..")
+    CASE 2
+      CALL IbStat("^^")
+    CASE ELSE
+      CALL IbStat("??")
+  END SELECT
+  DELAY(0.1)
+END SUB

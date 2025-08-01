@@ -403,9 +403,11 @@ SUB BufC SHARED '************************** BufferClear ************************
   IF SIO.Dflg%=0 THEN
     WHILE LOC(7)>0
       IByte$=INPUT$(1,#7)
+      DELAY(0.05)
       i%=i%+1
     WEND
     IF SIO.Tflg%=1 THEN : PRINT #6,"** BUFC-";i%;" Bytes cleared"
+    PRINT #5,"** BUFC-";i%;" Bytes cleared"
   END IF
 END SUB
 

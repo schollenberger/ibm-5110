@@ -69,8 +69,8 @@ START:
   EOFP$      = CHR$( 4)+CHR$(21)+CHR$(30)+CHR$(31)      'EOT+LF+RS+US X'04151E1F'
 
 ' #TODO# need to make EFOG chars code page dependent
-'  EOFG$      = CHR$( 4)+CHR$(30)+CHR$(31)               'EOT+RS+US X'041E1F - EBCDIC
-  EOFG$      = CHR$( 3)+CR$+LF$                          'EOT+cr+LF X'040D0A - ASCII
+'  EOFG$      = CHR$( 4)+CHR$(30)+CHR$(31)               'EOT+RS+US X'041E1F' - EBCDIC
+  EOFG$      = CHR$( 3)                                  'EOT X'03' - ASCII - no crlf
 
   Ef%        = 0                                        ' default values
   EOLIN$     = ""                                       'Current EOL string on get
@@ -358,10 +358,11 @@ GFile:
       IF SIO.Tflg%=1 THEN : PRINT #6,"** GETS-";Inputline$
       PRINT #1,Inputline$
       ''CALL PrCha(25,71,6,RIGHT$("     "+STR$(RECS),6),15,4)
-    END IF
+    ELSE
+      PRINT #5,"** GFILE - EOF received - finishing up"
+      CALL BufC
+   END IF
   WEND
-  PRINT #5, "** GFILE - ...done"
-
   CALL WrCha(24,61,20,"")
   CLOSE #1
   StopTime=INT(TIMER)
@@ -370,6 +371,7 @@ GFile:
     PRINT #6, "  Date:";DATE$;"  Time:";TIME$;" Runtime:";RunTime;" Sec."
   END IF
   PRINT #2, "GETFILE Dstfile="+DstFile$;" from serial"
+  PRINT #5, "** GFILE - ...done"
 RETURN
 
 Messg:
